@@ -1,0 +1,50 @@
+* what are the jacks and controls?
+
+- two inputs with incoming volumes
+- one output
+
+2x or 3x x/y cv and knobs?
+
+16x valueY eg for vocoder/throat
+
+mode
+
+speed/update speed - when far right then we use SPEED in which is TRIGGER IN 
+
+or for vocoder x-channel z-parameter y-value
+
+but maybe there are not so many parameters
+
+* functionality
+
+Main functionality is from split of carrier and filter
+
+** LPC substitution and raven lpc compressions
+
+** vocoder
+
+- bandwidth of bands, transposition of bands (how we assign?) 
+
+** glottal impulses/simulation and filtering
+
+** glottal impulses/simulation and vocal tract models
+
+16 throat sections and control over length (and width?) ?
+
+** other models? where we got with raven, bird song simulations
+
+* what are the glottal impulses
+
+** external reverse LPC
+
+** wavetables
+
+** peaks-spikes/square wave/simple calcs as in wormed_voice workshop
+
+** glottal simulations
+
+* what we can salvage from recent code?
+
+* new/other ideas...
+
+** raven throat shift register delay line
