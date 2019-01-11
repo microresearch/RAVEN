@@ -1,3 +1,32 @@
+* 11/1/19
+
+- first source and compiles - to test warps vocoder with own co-efficients, 32k samplerate and a few errors here and there to check out...
+
+* TODO:
+
+samplerate?=32000?
+
+- new testbed with WORM hardware platform, test wvocoder code... source dir
+
+- code from worm // run through all readme_old and raven.org notes, mindlin etc. -> basic plan of say 32 modes
+
+- start with channel vocoder implementation and get this working with internal oscillator:
+
+- phase vocoders?
+
+https://github.com/stekyne/PhaseVocoder/tree/master/Source
+
+https://github.com/ybdarrenwang/PhaseVocoder
+
+- layout controls and research any display
+- how this informs source/filter model
+- LPC work: *lpc4.c now!*
+
+- which other models we worked with?
+
+- delay/throat models
+
+
 * what are the jacks and controls?
 
 - two inputs with incoming volumes
@@ -11,19 +40,140 @@ mode
 
 speed/update speed - when far right then we use SPEED in which is TRIGGER IN 
 
-or for vocoder x-channel z-parameter y-value
+or for vocoder x-channel z-parameter y-value [but maybe there are not so many parameters]
 
-but maybe there are not so many parameters
+maybe graphic display as on o+c: OLED (but question there of SPI issues - so can use i2c OLED)
+
+or we use 16x leds exposed under soldermask - but how we select which to show (on knob change but there could be multiple simultaneous changes)
+
+* archived notes from README_old.org
+
+
+
+* start with implement and test vocoder codes
+
+http://sethares.engr.wisc.edu/vocoders/channelvocoder.html
+
+- pre-computed bandpass and FFT/iFFT as two seperate vocoder bases
+
+** what are our models/basis:
+
+
+*** warps:
+
+a bank of 20 analysis and 20 synthesis third-octave 48dB filters. The
+modulator sub-band signals are processed by envelope followers from
+which are derived the gains of each of the carrier sub-band
+signals. TIMBRE warps the connections between the modulator’s envelope
+followers and the carrier’s gain elements - effectively shifting up or
+down the formants extracted from the modulator signal.
+
+As the ALGORITHM knob is turned clockwise, the release time of the
+envelope followers is increased.
+
+By turning the knob fully clockwise, the modulator signal is
+frozen. The carrier is filtered by whichever formants were present in
+the modulator signal before the knob reached this position.
+
+warps is fixed set of filterbank coefficients. in wvocoder and
+wfilterbank we have basics but no decimation so calculated
+coefficients are wrong - but seem from notes that we fixed this??? 
+
+*TODO: RE-TEST*
+
+what is decimation? 
+
+how does formant shift work? 
+
+*** ownvocoder.c - svf based - svf.c - other code... 
+
+older notes: 7/8channel vocoder TODO svf.c and channelv.c
+
+- *swapping of channels*
+
+- 16 channels in parallel , switch exciters: unvoiced, pitch, controlled...
+
+- which filter basis or FFT? *now using svf*
+
+- what are channel frequencies and bandwidth? - see EMS2000 - bandwidth is fixed...
+
+SELX/SELY choose channel and setting, SELZ bandwidth SPEED as silence/no-pitch/pitch/external excitation
+
+what is excitation? INPUT? as ONE option. one MODE, other mode is excitation from input
+
+/root/rsync2016/projects/ERD_modules/worm/src/filter_my.py - for coeff calculations - also for warps port...
+
+*** zerius/borsboom - poor quality from last notes
+
+*** FFT/inverse FFT?
+
+was borsboom or re-implement
+
+*** archived code/notes
+
+- see also: http://gurzil.livejournal.com/15375.html and pvsvoc in csound code.
+
+- have a look at: [[file:~/projects/ERD_modules/worm/docs/mage/src/mage.cpp::/*%20This%20file%20is%20part%20of%20MAGE%20/%20pHTS(%20the%20performative%20HMM-based%20speech%20synthesis%20system%20)%20*/][file:~/projects/ERD_modules/worm/docs/mage/src/mage.cpp::/* This file is part of MAGE / pHTS( the performative HMM-based speech synthesis system ) */]]
+
+which also has vocoder code...
+
+
+
+
+** what we want to achieve:
+
+- 16 channels with varying bandwidth, overlap and frequency
+
+so we can't really have fixed bandpass or we have a few different
+vocoder modes (eg. based on classic vocoders like EMS. we have these
+bands somewhere?, also maybe different numbers of channels)
+
+from buchla 296: <100, 150, 250, 350, 500, 630, 800, 1k, 1.3k, 1.6k, 2k, 2.6k, 3.5k, 5k, 8k, >10k
+
+ems 2000: 140, 185, 270, 367, 444, 539, 653, 791, 958, 1161, 1406, 1703, 2064, 2700, 4000, 5388 - 30 db/octave
+
+dudley: According to the voder patent (US Patent 2,121,142), the ten bandpass edges were, in Hz, 0, 225, 450, 700, 1000, 1400, 2000, 2700, 3800, 5400, and 7500
+
+- vary connections between these 16 bands - cross-patching
+
+- mix of bands, band emphasis, individual bands?
+
+** ownvocoder.c
+
+** links
+
+http://clas.mq.edu.au/speech/synthesis/vocoders/channel_vocoders.html
+
+https://ccrma.stanford.edu/~jos/sasp/Dudley_s_Channel_Vocoder.html
+
+https://dsp.stackexchange.com/questions/2589/channel-vocoder-producing-output-with-click-sounds
+
+https://github.com/jerryjazzy/ChannelVocoder/blob/master/Final_Report_XiaoLu.pdf
+
+https://github.com/thal/C5515-Vocoder
+
+https://github.com/mwkent/VocoderOSC
+
+https://github.com/johnmwalker/Simple-STM32F4-Vocoder
+
+https://github.com/mmorise/World ??
+
+https://github.com/mmorise/NoiseGenerators/tree/master/src
+
+
+
 
 * functionality
 
 Main functionality is from split of carrier and filter
 
-** LPC substitution and raven lpc compressions
+** LPC substitution and raven lpc compressions?
+
+** phase vocoder
 
 ** vocoder
 
-- bandwidth of bands, transposition of bands (how we assign?) 
+- bandwidth of bands, transposition of bands (how we assign?), level of bands, vocoder delays, feedback
 
 ** glottal impulses/simulation and filtering
 
@@ -33,18 +183,227 @@ Main functionality is from split of carrier and filter
 
 ** other models? where we got with raven, bird song simulations
 
-* what are the glottal impulses
+* what are the glottal impulses/ carriers
 
-** external reverse LPC
-
+** inputs/filtered inputs
+** external reverse LPC = input reverse filter more or less
 ** wavetables
 
 ** peaks-spikes/square wave/simple calcs as in wormed_voice workshop
 
 ** glottal simulations
 
-* what we can salvage from recent code?
 
+* and what these are run through
+
+** for vocoder
+** animated or recorded sets of bandpasses
+** basic filters
+** vocal tract models
+** LPC
+
+* what we can salvage from recent code?
 * new/other ideas...
 
 ** raven throat shift register delay line
+
+* README_old.org - >raven notes from here - see and summarise raven.org TODO
+
+NEW- crow LPC (how to reduce length of co-effs), crow glottis model, worm tubes, worm wavetable
+
+- RAVENs??? vocal tract length of 13 cm in ravens: formants: http://www.ncbi.nlm.nih.gov/pmc/articles/PMC3482666/
+
+- what is klanK again? how differs dynklank?
+
+sort out from here and from raven.org :
+
+1] what are models here: mass/glottis models // tube models // additional radiation and effects?
+
+2] what is the data (lengths, diameters, forces, equations)?
+
+3] what code can we work with and what did we get working so far? 
+
+4] how it can be modified towards worms and techniques here?
+
+*** what are the potential models for crow/raven vocalisation simulation:
+
+- LPC from recordings (collected) or HMM? - base excitation - wavetable excitation
+- formant model (excitation source and frequencies?)
+- tube/physical models listed: also useful for other work:
+
+1. Kelly-Lochbaum model: https://ccrma.stanford.edu/~jos/pasp/Singing_Kelly_Lochbaum_Vocal_Tract.html -> Perry Cook (refs/code? PRCThesis.pdf)
+2. tube resonance model - TRM - see tube.c
+3. two mass model - Ishizaka and Flanagan, Fletcher (Ravens)= Fletcher1988.pdf for glottis only - this is one mass!
+4. waveguide model - transmission line? - perry cook/ lochbaum??? .. tube?
+5. APEX model = 2-D vocal tract articulation... same as SC ntube!
+
+*** first LPC breakdown (also in first section on modes above)
+
+// work on laptop LPC test
+
+- talkie is LPC: notes // LPC/lpc.c
+
+- lpcanalyzer | lpcanalysiss.c :
+
+Linear predictive coding analysis on any arbitrary input signal. The
+spectrum of the input signal is modeled, and used to filter the
+source. This works most successfully if the source is spectrally flat
+to begin with, ie, an impulse train ( Impulse UGen ) or white noise (
+WhiteNoise UGen ).
+
+[[file:~/sc3-plugins/source/NCAnalysisUGens/LPCAnalysis.cpp::*%20LPCAnalysis.cpp][file:~/sc3-plugins/source/NCAnalysisUGens/LPCAnalysis.cpp::* LPCAnalysis.cpp]] is there  and LPCsynth: 
+
+[[file:~/sc3-plugins/source/JoshUGens/JoshUGens.cpp::void%20LPCSynth_next_k(LPCSynth%20*unit,%20int%20inNumSamples)][file:~/sc3-plugins/source/JoshUGens/JoshUGens.cpp::void LPCSynth_next_k(LPCSynth *unit, int inNumSamples)]]
+
+- LPC: [[file:~/projects/ERD_modules/worm/docs/Csound6.05/util/lpanal.c::lpanal.c:]]
+
+- lpc dir from SLP book - TODO: run commandline tests from docs/SLP,
+  fix mallocs, work in or probably discard as would need lots more
+  work
+
+- https://github.com/freedv/codec2/blob/master/src/lpc.c
+
+- JAN/UNIANAL
+
+- docs/lpc-1.0
+
+
+
+***
+
+ - N.H.Fletcher Bird song- a quantitative model. J. Theo. Biology, 135:455–481, 1988 specifically raven model
+
+[- return to Hitchcock/trautonium notes]
+
+- find and condense crow voice pdf and others
+
+- run through all models noted above// code bases:
+
+impulse/excitation: klattsyn/klglot88(?), praat, lfgen to fix and
+parametrise, singer/SPASM based on what we have (which
+is?-singer.ins/scm), SC example above, LPC, vtsynth(can we re-code?)
+
+// abstract models: 1or2 mass model, LF, impulses/oscillators, wavetable, LPC inverse filtered, Rosenberg-C, R++/Veldhuis
+
+tract/tube/formant: klatt, praat, tube.c/TRM, ntube/sc, lots of formant/bandpass options, LPC, singer/SPASM see above
+
+// models: formant, tube/waveguide/mesh/transmission line, LPC
+
+- Synthesis of Voiced Sounds From a Two-Mass Model of the Vocal
+  Cords - Ishizaka and Flanagan
+
+- tested: snd ~/projects/ERD_modules/worm/docs/singer.scm but have to save as wav to play later
+
+- py-trm has wavetable: [[file:~/projects/ERD_modules/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/%20Calculates%20the%20initial%20glottal%20pulse%20and%20stores%20it%20in%20the%20wavetable,%20for%20use%20in%20the%20oscillator.][file:~/projects/ERD_modules/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/ Calculates the initial glottal pulse and stores it in the wavetable, for use in the oscillator.]]
+
+but we have this in our tube.c also here! IGNORE
+
+- lfgen.c - generates something but waveform looks strange/noisy -
+  now as little endian and changed way saved now so is unsigned int but still most of wave is negative... WHY?
+
+tests on - flowgen_shimmer in shimmer in docs - Fant model WORKING -
+see raven/also vowel there is okay filter-wise!
+
+- raven wavetable (see braids:
+
+[[file:~/projects/ERD_modules/older/eurorack/braids/digital_oscillator.cc::void%20DigitalOscillator::RenderWavetables(][file:~/projects/ERD_modules/older/eurorack/braids/digital_oscillator.cc::void DigitalOscillator::RenderWavetables(]] )
+
+excitation is raven wavetable with incoming (eg. voice) as LPC filter to apply
+
+(also inverse filtering to output residual could be done seperately)
+
+*** GLOTTAL (or excitation) MODELS:
+
+- Klatt / klsyn - which one and where to look? check nvp also
+- tube.c wavetable model
+- praat - mass model
+
+- lfgen in progress - still to fix?
+
+- flowgen_shimmer in voice_synth in docs - Fant model WORKING
+
+- http://homepage.univie.ac.at/christian.herbst//python/glottal_air_flow_models_8py_source.html = KLGLOTT88 and Rosenberg
+
+now as *glottalair.py* and writing wav file - seems working -> port to C (also Rosenberg tests in lfgen.c are working)
+
+- others: wavetable, formants a la SINGER/SPASM with two glottal
+  oscillators and vibrato -> where? check VOICFORM again, LPC
+
+- plague model (where we find clean code? looking now at simforstacksansmem2.c
+
+*** TRACHEA MODELS:
+
+- formants/artificial filtering (Klatt)
+- vocoder style fixed channels
+- tube.c - articulatory
+- praat - ??where??
+- ntube.c from SC TODO (see also twotube model there)
+
+- Perry Cook/SPASM - digital waveguide ladder filter
+
+[[file:~/projects/ERD_modules/worm/docs/singer.scm::%3B%3B%3B%20Perry%20Cook's%20physical%20model%20of%20the%20vocal%20tract%20as%20described%20in:][file:~/projects/ERD_modules/worm/docs/singer.scm::;;; Perry Cook's physical model of the vocal tract as described in:]] 
+
+- Coker - digital transmission line
+
+- elements BLOW to investigate: [[file:~/projects/ERD_modules/older/eurorack/elements/dsp/tube.cc::/%20Simple%20waveguide%20tube.][file:~/projects/ERD_modules/older/eurorack/elements/dsp/tube.cc::/ Simple waveguide tube.]] and exciter is quite simple?
+
+*** other approaches completely
+
+- FOF/CHANT etc...
+- VOSIM
+- LPC
+- HMM?
+
+*** ///////
+
+find synsrc for LF and Rosenberg - can't find
+
+http://www.mattmontag.com/projects-page/academic/speech
+
+NOTES from this:
+
+    First, the glottal pulse is perturbed with noise to simulate air
+    turbulence ("breathiness") at the glottis. Importantly, this noise
+    is not applied to the entire glottal signal, but only in the
+    positive region where the glottis is open and air flow is present.
+    Second, the pitch and amplitude envelope for the speech was
+    manipulated to add a small random inflection and natural energy
+    decay at the release of vocal stress.  Third, two or three sharp,
+    quiet "startup pulses" are inserted at the beginning of the
+    glottal pulse train, which represents a subtle glottal fricative
+    at the onset of the vowel. This aids in the realism of the vocal
+    attack.  Fourth, the signal was low passed with a zero at nyquist
+    to reduce high frequency ringing.
+
+
+
+http://www.mattmontag.com/projects/speech/speechproduction.m
+
+*** /////
+
+how we can work with these models towards crow voice. pointers:
+
+papers: Fletcher(1988), Smyth and Smith (2002)
+
+*** raven.org etc.
+
+- vocal fry notes there and skew eg. skew in klsyn
+
+- 2mass IF model - balloon -> raven.c= makes audio but need to tweak settings - DOUBLE issue, IF_final.m
+
+- plague model
+
+- LF - lfgen.c=more rosenberg well rest is commented out but can be tested, flowgen_shimmer
+
+- Rosenberg - matlab, glottalair.py
+
+R++ and others????
+
+*- all as wavetables inc. Fletcher...*
+
+Gardner: Continuous model for vocal fold oscillations to study the effect of feedback
+
+Herzel: MergelletalJASA99.pdf
+
+Titze: 
+
