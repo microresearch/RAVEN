@@ -1,6 +1,32 @@
 * 11/1/19
 
-- first source and compiles - to test warps vocoder with own co-efficients, 32k samplerate and a few errors here and there to check out...
+- first source and compiles - TODO: test warps vocoder with own co-efficients, 32k samplerate and a few errors here and there to check out...
+
+- we need track modulation and other sources 1v/oct
+- input is trigger and mod for vocoder, we need one extra input
+
+* 15/1
+
+- how to divide carrier/source and modulator/filter scheme across all/make sense
+
+eg. modulator could be reverse LPC of voice inout for vocoder, follow pitch for various modulator/excitation sources
+
+excitation/filter - slew/envelope...
+
+* 16/1
+
+FFT vocoder overlap follows borsboom - for 512 samples with 256 overlap // we need 256 in so buffer for in and out - TODO: test buffering
+
+- if first-time then we need full buffer (always read in)
+- shift last 256 samples to begin of both buffers (mod and carrier)
+
+loop around
+- read 256 samples into second part both buffers
+- vocode all
+- do overlap for out 256 samples
+- shift last 256 samples to begin of both buffers (mod and carrier)
+ 
+TODO: re-implement vocode.c with 50% overlap
 
 * TODO:
 
@@ -10,7 +36,7 @@ samplerate?=32000?
 
 - code from worm // run through all readme_old and raven.org notes, mindlin etc. -> basic plan of say 32 modes
 
-- start with channel vocoder implementation and get this working with internal oscillator:
+- start with channel vocoder implementation and get this working with internal oscillator// model for FFT vocoder
 
 - phase vocoders?
 
@@ -25,30 +51,6 @@ https://github.com/ybdarrenwang/PhaseVocoder
 - which other models we worked with?
 
 - delay/throat models
-
-
-* what are the jacks and controls?
-
-- two inputs with incoming volumes
-- one output
-
-2x or 3x x/y cv and knobs?
-
-16x valueY eg for vocoder/throat
-
-mode
-
-speed/update speed - when far right then we use SPEED in which is TRIGGER IN 
-
-or for vocoder x-channel z-parameter y-value [but maybe there are not so many parameters]
-
-maybe graphic display as on o+c: OLED (but question there of SPI issues - so can use i2c OLED)
-
-or we use 16x leds exposed under soldermask - but how we select which to show (on knob change but there could be multiple simultaneous changes)
-
-* archived notes from README_old.org
-
-
 
 * start with implement and test vocoder codes
 
@@ -89,6 +91,8 @@ how does formant shift work?
 
 older notes: 7/8channel vocoder TODO svf.c and channelv.c
 
+can we re-compute coefficients or just repatch bands...
+
 - *swapping of channels*
 
 - 16 channels in parallel , switch exciters: unvoiced, pitch, controlled...
@@ -103,11 +107,30 @@ what is excitation? INPUT? as ONE option. one MODE, other mode is excitation fro
 
 /root/rsync2016/projects/ERD_modules/worm/src/filter_my.py - for coeff calculations - also for warps port...
 
-*** zerius/borsboom - poor quality from last notes
 
-*** FFT/inverse FFT?
+*** FFT/inverse FFT - same model for phase vocoder effects
 
-was borsboom or re-implement
+what FFT method makes sense for-> larger number of channels and dynamic shifts (still we have bands)
+
+- we need windowing/overlap
+
+was borsboom or re-implement // *** zerius/borsboom - poor quality from last notes - but demos sound fine!
+
+sketch out and see what is going wrong if anything: question of window overlap?
+
+window length and overlap: 50-80% overlap, window length of 256 or 512 or 1024 or 2048 (we need to buffer so there will be a delay)
+
+say we have 256 window and 128 overlap (50%) then we need to read in 128 samples every time
+
+different FFT/IFFT
+
+also: https://github.com/marsus/MyPatches/blob/master/ChannelVocoderPatch.hpp
+
+with (which wraps arm fft so we should use this):
+
+https://github.com/pingdynasty/OwlProgram/tree/master/LibSource
+
+"framing -> FFT -> IFFT -> overlap add" -> framing with hanning or other window
 
 *** archived code/notes
 
@@ -119,6 +142,13 @@ which also has vocoder code...
 
 
 
+
+*** ownvocoder.c
+
+*** sc vocoder
+
+
+bark/filter
 
 ** what we want to achieve:
 
@@ -138,7 +168,6 @@ dudley: According to the voder patent (US Patent 2,121,142), the ten bandpass ed
 
 - mix of bands, band emphasis, individual bands?
 
-** ownvocoder.c
 
 ** links
 
@@ -150,15 +179,34 @@ https://dsp.stackexchange.com/questions/2589/channel-vocoder-producing-output-wi
 
 https://github.com/jerryjazzy/ChannelVocoder/blob/master/Final_Report_XiaoLu.pdf
 
-https://github.com/thal/C5515-Vocoder
+bandpass: https://github.com/thal/C5515-Vocoder
 
-https://github.com/mwkent/VocoderOSC
+bandpass: https://github.com/mwkent/VocoderOSC
 
-https://github.com/johnmwalker/Simple-STM32F4-Vocoder
+???https://github.com/mmorise/World 
 
-https://github.com/mmorise/World ??
+noise: https://github.com/mmorise/NoiseGenerators/tree/master/src
 
-https://github.com/mmorise/NoiseGenerators/tree/master/src
+* what are the jacks and controls?
+
+- two inputs with incoming volumes
+- one output
+
+2x or 3x x/y cv and knobs?
+
+16x valueY eg for vocoder/throat
+
+mode
+
+speed/update speed - when far right then we use SPEED in which is TRIGGER IN 
+
+or for vocoder x-channel z-parameter y-value [but maybe there are not so many parameters]
+
+maybe graphic display as on o+c: OLED (but question there of SPI issues - so can use i2c OLED)
+
+or we use 16x leds exposed under soldermask - but how we select which to show (on knob change but there could be multiple simultaneous changes)
+
+* archived notes from README_old.org
 
 
 
@@ -168,6 +216,29 @@ https://github.com/mmorise/NoiseGenerators/tree/master/src
 Main functionality is from split of carrier and filter
 
 ** LPC substitution and raven lpc compressions?
+
+so:
+
+- input1 as residual/inv filter and input2 as LPC filter, vice versa
+- input as LPC filter applied to other excitations
+- input as residual excites other filters/speakandspell LPC, vocoder excitation
+- same process as LPC speakspell encodings ???
+
+https://github.com/going-digital/Talkie/issues/4
+
+https://github.com/ptwz/python_wizard/tree/master/pywizard
+
+https://github.com/mcartwright/LPC-Toolkit
+
+pure data: ekext
+
+https://github.com/pd-l2ork/pd/tree/master/externals/ekext
+
+in->hi_pass->lpc->lpreson-other signal->lo_pass->hi_pass->out // hanning windowing
+
+LPCSynth: sc code in JoshUGens.cpp lpcana: 
+
+lpanal: http://www.csounds.com/manual/html/lpanal.html for csound and also https://csound.com/docs/manual/lpfreson.html
 
 ** phase vocoder
 
@@ -201,7 +272,6 @@ Main functionality is from split of carrier and filter
 ** basic filters
 ** vocal tract models
 ** LPC
-
 * what we can salvage from recent code?
 * new/other ideas...
 
