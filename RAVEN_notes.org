@@ -224,6 +224,7 @@ so:
 - input as excitation and filter but with LPC coeffs shifted
 - input as residual excites other filters/speakandspell LPC, vocoder excitation
 - same process as LPC speakspell encodings ??? other LPC encoding processes
+- so get excitation and process through speak and spell and vice versa, or live LPC encoding for that format
 
 https://github.com/going-digital/Talkie/issues/4
 
@@ -249,12 +250,23 @@ lpc4.c: LPC_cross and LPC_residual
 
 some of this is from https://ccrma.stanford.edu/workshops/dsp2008/prc/NotYet/Week2Labs/PRCBookCode/Ch5-8/lpc/fitlpc.c
 
-lpcanalysis.c: sc code ported - LPCAnalyzer  - crow coeffs here
-lpcanalysissc.c - differences?
+lpcanalysis.c: sc code ported - LPCAnalyzer  - crow coeffs here TESTED/WORKING - need more coeffs -> see below
 
-lpcforlap.c: as lpc4?? but for lap - wierd results
+lpcanalysissc.c - differences? this one doesn't work
 
+lpcforlap.c: as lpc4?? but for lap - weird results
 
+////
+
+raven/crow coeffs in crow_lpc_coeffs.h were generated using lpcforlap but without preemph filter and windowings
+
+first one is from file: /root/rsync2016/projects/ERD_modules/worm/raven_rec/mysinglecro32k.wav
+
+////
+
+*** 11/9/2019
+
+in lpc4.c we bend coeffs...
 
 ** phase vocoder
 

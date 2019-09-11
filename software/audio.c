@@ -32,6 +32,35 @@ static float oldselx=0.5f, oldsely=0.5f, oldselz=1.0f;
 
 extern Wavetable wavtable;
 
+void LPC_cross(float * newinput, float *newsource, float * output, int numSamples);
+
+static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany){
+  int32_t tmp;
+
+  for (int n = 0; n < howmany; n++) {
+    tmp = inbuffer[n] * 32768.0f;
+    tmp = (tmp <= -32768) ? -32768 : (tmp >= 32767) ? 32767 : tmp;
+    outbuffer[n] = (int16_t)tmp;
+		}
+}
+
+static inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany){
+  for (int n = 0; n < howmany; n++) {
+    outbuffer[n]=(float32_t)(inbuffer[n])/32768.0f;
+  }
+}
+
+
+void LPCAnalyzer_next(float *inoriginal, float *indriver, float *out, int p, int inNumSamples);
+
+void LPCanalyzer(int16_t* incoming,  int16_t* outgoing, float samplespeed, u8 size){
+  float voicebuffer[32],otherbuffer[32];
+       int_to_floot(incoming,voicebuffer,size);
+       LPCAnalyzer_next(NULL, voicebuffer, otherbuffer, 10, size); //poles=10 - CROW TEST!
+   floot_to_int(mono_buffer,otherbuffer,size);
+};
+
+
 static inline void audio_comb_stereo(int16_t sz, int16_t *dst, int16_t *lsrc, int16_t *rsrc)
 {
 	while(sz)
@@ -62,21 +91,6 @@ static inline void doadc(){
   CONSTRAIN(_selz,0.0f,1.0f);
 }
 
-static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany){
-  int32_t tmp;
-
-  for (int n = 0; n < howmany; n++) {
-    tmp = inbuffer[n] * 32768.0f;
-    tmp = (tmp <= -32768) ? -32768 : (tmp >= 32767) ? 32767 : tmp;
-    outbuffer[n] = (int16_t)tmp;
-		}
-}
-
-static inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany){
-  for (int n = 0; n < howmany; n++) {
-    outbuffer[n]=(float32_t)(inbuffer[n])/32768.0f;
-  }
-}
 
 
 
@@ -211,20 +225,19 @@ void I2S_RX_CallBack(int16_t *src, int16_t *dst, int16_t sz)
     //    samplerate_simple_exy(mono_buffer, samplespeed, sz/2, wormlist[_intmode]->getsample, wormlist[_intmode]->sampleratio, wormlist[_intmode]->maxextent, triggered); // trigger toggle only on threshold
 
     // wvocoder testing now - generate carrier-wavetable as in testing, modulator is sample, convert this to floats, convert back from floats below
-    dowavetable(carrier, &wavtable, 1.0f, sz/2); // not sure what speed 1.0f should be - test?
+    //    dowavetable(carrier, &wavtable, 1.0f, sz/2); // not sure what speed 1.0f should be - test?
     // modulator
+    //    int_to_floot(incoming, modulator, sz/2);
+
+    //    Vocoder_Process(modulator, carrier, vout, sz/2);
+    //    floot_to_int(mono_buffer, vout, sz/2);
+
+    //        LPCanalyzer(incoming, mono_buffer, 1.0f, sz/2); // this is the crow coeff one
+
     int_to_floot(incoming, modulator, sz/2);
-
-    Vocoder_Process(modulator, carrier, vout, sz/2);
+    LPC_cross(modulator, carrier, vout, sz/2);
     floot_to_int(mono_buffer, vout, sz/2);
-     
-      
-    for (u8 x=0;x<sz/2;x++) {
-      audio_buffer[cc++]=mono_buffer[x];
-    if (cc>AUDIO_BUFSZ-1) cc=0;
-    }
-  
-
+    
   audio_comb_stereo(sz, dst, mono_buffer,left_buffer);
 }
 #endif

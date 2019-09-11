@@ -34,6 +34,10 @@
 #include "wavetables.h"
 #endif
 
+void LPCAnalysisinit(int _windowsize);
+void LPCAnalyzer_init4();
+
+
 /* DMA buffers for I2S */
 __IO int16_t tx_buffer[BUFF_LEN], rx_buffer[BUFF_LEN];
 
@@ -67,7 +71,9 @@ void main(void)
   I2S_Block_Init();
   I2S_Block_PlayRec((uint32_t)&tx_buffer, (uint32_t)&rx_buffer, BUFF_LEN);
   //  Audio_Init(); not needed
-
+  LPCAnalysisinit(32); // windowsize?
+  LPCAnalyzer_init4();
+  
   while(1)
     {
     }
