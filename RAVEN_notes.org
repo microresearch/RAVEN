@@ -215,14 +215,15 @@ or we use 16x leds exposed under soldermask - but how we select which to show (o
 
 Main functionality is from split of carrier and filter
 
-** LPC substitution and raven lpc compressions?
+** LPC substitution and raven lpc compressions? // latest LPC notes
 
 so:
 
 - input1 as residual/inv filter and input2 as LPC filter, vice versa
 - input as LPC filter applied to other excitations
+- input as excitation and filter but with LPC coeffs shifted
 - input as residual excites other filters/speakandspell LPC, vocoder excitation
-- same process as LPC speakspell encodings ???
+- same process as LPC speakspell encodings ??? other LPC encoding processes
 
 https://github.com/going-digital/Talkie/issues/4
 
@@ -236,9 +237,24 @@ https://github.com/pd-l2ork/pd/tree/master/externals/ekext
 
 in->hi_pass->lpc->lpreson-other signal->lo_pass->hi_pass->out // hanning windowing
 
-LPCSynth: sc code in JoshUGens.cpp lpcana: 
+LPCSynth: sc code in JoshUGens.cpp : LPCsynth and LPCvals (not LPCAnalyzer which we use below), LPCAna is in sc code: AnaUtils.sc
 
 lpanal: http://www.csounds.com/manual/html/lpanal.html for csound and also https://csound.com/docs/manual/lpfreson.html
+
+// our own lpc codes:
+
+/////////root/projects/ERD_MODULES/WORM/src/archived:
+
+lpc4.c: LPC_cross and LPC_residual
+
+some of this is from https://ccrma.stanford.edu/workshops/dsp2008/prc/NotYet/Week2Labs/PRCBookCode/Ch5-8/lpc/fitlpc.c
+
+lpcanalysis.c: sc code ported - LPCAnalyzer  - crow coeffs here
+lpcanalysissc.c - differences?
+
+lpcforlap.c: as lpc4?? but for lap - wierd results
+
+
 
 ** phase vocoder
 
