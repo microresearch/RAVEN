@@ -230,7 +230,7 @@ https://github.com/going-digital/Talkie/issues/4
 
 https://github.com/ptwz/python_wizard/tree/master/pywizard
 
-https://github.com/mcartwright/LPC-Toolkit
+https://github.com/mcartwright/LPC-Toolkit -> this is the max/mps basis for pd ekext // looks nasty!
 
 pure data: ekext
 

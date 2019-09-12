@@ -25,7 +25,7 @@ but filter of source using coeffs always works but NOT inverse filter on source?
 
 */
 
-#define BLOCK_SIZE 128
+#define BLOCK_SIZE 32
 #define CHUNKSIZE 32
 #define	P_MAX	10	/* order p of LPC analysis, typically 8..14 */
 
@@ -35,7 +35,9 @@ typedef float LPCfloat;
 static const int windowsize=BLOCK_SIZE; // say up to 1024
 static LPCfloat inputty[129];
 
-static LPCfloat window128[1024]={0.000003, 0.000007, 0.000012, 0.000020, 0.000031, 0.000045, 0.000066, 0.000094, 0.000132, 0.000184, 0.000254, 0.000346, 0.000470, 0.000633, 0.000846, 0.001125, 0.001485, 0.001950, 0.002544, 0.003300, 0.004256, 0.005455, 0.006953, 0.008810, 0.011098, 0.013900, 0.017308, 0.021428, 0.026375, 0.032277, 0.039273, 0.047510, 0.057144, 0.068335, 0.081248, 0.096044, 0.112883, 0.131909, 0.153256, 0.177034, 0.203323, 0.232174, 0.263593, 0.297542, 0.333931, 0.372615, 0.413388, 0.455984, 0.500077, 0.545278, 0.591145, 0.637184, 0.682857, 0.727594, 0.770803, 0.811880, 0.850228, 0.885265, 0.916443, 0.943263, 0.965282, 0.982134, 0.993531, 0.999279, 0.999279, 0.993531, 0.982134, 0.965282, 0.943263, 0.916443, 0.885265, 0.850228, 0.811880, 0.770803, 0.727594, 0.682857, 0.637184, 0.591145, 0.545278, 0.500077, 0.455984, 0.413388, 0.372615, 0.333931, 0.297542, 0.263593, 0.232174, 0.203323, 0.177034, 0.153256, 0.131909, 0.112883, 0.096044, 0.081248, 0.068335, 0.057144, 0.047510, 0.039273, 0.032277, 0.026375, 0.021428, 0.017308, 0.013900, 0.011098, 0.008810, 0.006953, 0.005455, 0.004256, 0.003300, 0.002544, 0.001950, 0.001485, 0.001125, 0.000846, 0.000633, 0.000470, 0.000346, 0.000254, 0.000184, 0.000132, 0.000094, 0.000066, 0.000045, 0.000031, 0.000020, 0.000012, 0.000007, 0.000003};
+static LPCfloat window128[128]={0.000003, 0.000007, 0.000012, 0.000020, 0.000031, 0.000045, 0.000066, 0.000094, 0.000132, 0.000184, 0.000254, 0.000346, 0.000470, 0.000633, 0.000846, 0.001125, 0.001485, 0.001950, 0.002544, 0.003300, 0.004256, 0.005455, 0.006953, 0.008810, 0.011098, 0.013900, 0.017308, 0.021428, 0.026375, 0.032277, 0.039273, 0.047510, 0.057144, 0.068335, 0.081248, 0.096044, 0.112883, 0.131909, 0.153256, 0.177034, 0.203323, 0.232174, 0.263593, 0.297542, 0.333931, 0.372615, 0.413388, 0.455984, 0.500077, 0.545278, 0.591145, 0.637184, 0.682857, 0.727594, 0.770803, 0.811880, 0.850228, 0.885265, 0.916443, 0.943263, 0.965282, 0.982134, 0.993531, 0.999279, 0.999279, 0.993531, 0.982134, 0.965282, 0.943263, 0.916443, 0.885265, 0.850228, 0.811880, 0.770803, 0.727594, 0.682857, 0.637184, 0.591145, 0.545278, 0.500077, 0.455984, 0.413388, 0.372615, 0.333931, 0.297542, 0.263593, 0.232174, 0.203323, 0.177034, 0.153256, 0.131909, 0.112883, 0.096044, 0.081248, 0.068335, 0.057144, 0.047510, 0.039273, 0.032277, 0.026375, 0.021428, 0.017308, 0.013900, 0.011098, 0.008810, 0.006953, 0.005455, 0.004256, 0.003300, 0.002544, 0.001950, 0.001485, 0.001125, 0.000846, 0.000633, 0.000470, 0.000346, 0.000254, 0.000184, 0.000132, 0.000094, 0.000066, 0.000045, 0.000031, 0.000020, 0.000012, 0.000007, 0.000003};
+
+static LPCfloat window32[32]={0.000019, 0.000088, 0.000318, 0.001015, 0.002934, 0.007748, 0.018718, 0.041390, 0.083793, 0.155316, 0.263593, 0.409601, 0.582778, 0.759205, 0.905585, 0.989041, 0.989041, 0.905585, 0.759205, 0.582778, 0.409601, 0.263593, 0.155316, 0.083793, 0.041390, 0.018718, 0.007748, 0.002934, 0.001015, 0.000318, 0.000088, 0.000019};
 
 // gaussian window of varying sizes are generated below
 
@@ -124,6 +126,10 @@ void calculateDurbPoles(){ // into coeffs
 error *= 1.0 - r * r;
  }
 
+    /*	for(i=0; i<=P_MAX; ++i) {
+	  printf("%f ",coeff[i]); 
+	}
+    */
 //	G= sqrtf(error); .// TODO!
 }
 
@@ -159,7 +165,9 @@ float predict(long order,long length,float *data,float *coeffs, float * errur)
 
     for (i=0;i<length;i++)     {         //  0 to hopsize??????????
         tmp = 0.0;
-	for (j=0;j<order;j++)  tmp += Zs[j]*coeffs[j];
+	for (j=0;j<order;j++)  {
+	  tmp += Zs[j]*coeffs[j];
+	}
 	for (j=order-1;j>0;j--) Zs[j] = Zs[j-1];
 	Zs[0] = data[i];
         error = data[i] - tmp;
@@ -185,6 +193,7 @@ void calculateOutput(LPCfloat * source, LPCfloat * target, int startpos, int num
 		for(j=0; j<P_MAX; ++j) {
 		  posnow= (basepos-j)%windowsize;
 		  sum += lasted[posnow]*coeff[j]; 
+		  //		  printf("%f ",coeff[j]); 
 		}
 		sum= source[i]-sum; //scale factor G calculated by squaring energy E below TODO - if we use this from coeffs
 		lasted[startpos+i]=sum;
@@ -278,10 +287,10 @@ void LPCAnalysis_update(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * out
 	do_impulse(tt, numSamples, 200);
 
 	if(numSamples>=left) {
-		lpc_preemphasis(newinput,numSamples,0.97);
+	  //		lpc_preemphasis(newinput,numSamples,0.97);
 
 		for (i=0; i<left;++i) {
-		  float temp= newinput[i]*window128[pos]; //where are we in window 
+		  float temp= newinput[i];//*window128[pos]; //where are we in window 
 		  inputty[pos++]=temp;
 		  newinput[i]=temp;
 		}
@@ -299,7 +308,7 @@ void LPCAnalysis_update(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * out
 		  newinput[i]=temp;
 		}
 			//		calculateresOutput(newinput, output+left, pos-remainder, remainder);
-			//		calculateOutput(tt, newsource+left, pos-remainder, remainder);
+			calculateOutput(tt, newsource+left, pos-remainder, remainder);
 			predict(P_MAX,remainder,newinput,coeff,newsource+left); // this gives the error signal into newsource
 	} else {
 		lpc_preemphasis(newinput,numSamples,0.97);
@@ -310,7 +319,7 @@ void LPCAnalysis_update(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * out
 		  newinput[i]=temp;
 		}
 		///		calculateresOutput(newinput, output, pos-numSamples, numSamples);
-		//		calculateOutput(tt, newsource, pos-numSamples, numSamples);
+		calculateOutput(tt, newsource, pos-numSamples, numSamples);
 		predict(P_MAX,numSamples,newinput,coeff,newsource); // this gives the error signal into newsource
 	}
 
@@ -344,10 +353,10 @@ void main(int argc, char * argv []){
 
 	// for guassian window!
 
-	double imid = 0.5 * (128 + 1), edge = exp (-12.0);
-	for (long i = 1; i <= 128; i++) {
-	  float xx = (exp (-48.0 * (i - imid) * (i - imid) / (128 + 1) / (128 + 1)) - edge) / (1 - edge);
-	  //	  printf("%f, ",xx);
+	double imid = 0.5 * (32 + 1), edge = exp (-12.0);
+	for (long i = 1; i <= 32; i++) {
+	  float xx = (exp (-48.0 * (i - imid) * (i - imid) / (32 + 1) / (32 + 1)) - edge) / (1 - edge);
+	  printf("%f, ",xx);
 	}
 
 
@@ -375,12 +384,12 @@ void main(int argc, char * argv []){
 	while ((readcount = sf_readf_float (infile, input,CHUNKSIZE)) > 0)
 	//			while ((readcount = sf_readf_double (infile, input, BLOCK_SIZE)) > 0)
 	{	
-	  //	  LPCAnalysis_update(input, pout, output, CHUNKSIZE, P_MAX);//
+	  	  LPCAnalysis_update(input, pout, output, CHUNKSIZE, P_MAX);//
 	  //	  LPC_cross(input, pout, output, CHUNKSIZE);
 	  //	  printf("SAMPLE %f", input[16]);
 
-	  LPC_residual(input,output, CHUNKSIZE);
-	  sf_writef_float (outfile, output, readcount) ;
+	  //	  LPC_residual(input,output, CHUNKSIZE);
+	  //	  sf_writef_float (outfile, output, readcount) ;
 	  //		sf_writef_double (outfile, output, readcount) ;
 		count++;
 		} ;
