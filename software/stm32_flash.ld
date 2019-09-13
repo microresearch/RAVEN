@@ -110,6 +110,14 @@ SECTIONS
     PROVIDE_HIDDEN (__fini_array_end = .);
   } >FLASH
 
+.flash :
+{
+. = ALIGN(4);
+*(.flash)
+. = ALIGN(4);
+} >FLASH
+
+
   /* used by the startup to initialize data */
   _sidata = .;
 
