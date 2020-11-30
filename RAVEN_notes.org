@@ -1,3 +1,19 @@
+* new notes late 2020
+
+STM32F767 double precision ? old code for worm we used for lpc? - assemble latest notes?
+
+left and right audio in to WM8731
+
+- vocoders
+- LPC swoppings, bends, morphs and filters -> where was worm/test code? here in SOFTWARE -> notes on lpc below
+- various throat sims, glottal and trachea models
+- raven works = physical models
+- others
+
+how to swop across modes so eg. use lpc reverse filtered excitation for vocoder
+
+see below: source and filter
+
 * 11/1/19
 
 - first source and compiles - TODO: test warps vocoder with own co-efficients, 32k samplerate and a few errors here and there to check out...
@@ -9,7 +25,7 @@
 
 - how to divide carrier/source and modulator/filter scheme across all/make sense
 
-eg. modulator could be reverse LPC of voice inout for vocoder, follow pitch for various modulator/excitation sources
+eg. modulator could be reverse LPC of voice input for vocoder, follow pitch for various modulator/excitation sources
 
 excitation/filter - slew/envelope...
 
@@ -267,6 +283,30 @@ first one is from file: /root/rsync2016/projects/ERD_modules/worm/raven_rec/mysi
 *** 11/9/2019
 
 in lpc4.c we bend coeffs...
+
+*** 10/9/2019
+
+still trying to figure out SC lpc and fitlpc/lpcresyn:
+
+// predict in fitlpc:
+
+for (i=0;i<length;i++)     {         //  0 to hopsize??????????
+tmp = 0.0;
+for (j=0;j<order;j++)  tmp += Zs[j]*coeffs[j];
+for (j=order-1;j>0;j--) Zs[j] = Zs[j-1];
+Zs[0] = data[i];
+error = data[i] - tmp;
+
+// resyn - with output as excitation in then out:
+
+for (i=0;i<length;i++)     {         //  0 to hopsize??????????
+
+for (j=0;j<order;j++)  output += Zs[j]*coeffs[j];
+for (j=order-1;j>0;j--) Zs[j] = Zs[j-1];
+Zs[0] = output;
+
+
+
 
 ** phase vocoder
 
