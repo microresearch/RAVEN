@@ -14,7 +14,7 @@
 
 
 #include "sai.h"
-#include <main.h>
+#include "main.h"
 #include <string.h>
 
 #define __UHSDR_DMAMEM
@@ -36,14 +36,36 @@ static __UHSDR_DMAMEM dma_audio_buffer_t dma;
 // #define PROFILE_APP
 static void MchfHw_Codec_HandleBlock(uint16_t which)
 {
+	// with callback to audio processing handle to check out
+
+	// Transfer complete interrupt
+    // Point to 2nd half of buffers
+	const size_t sz = IQ_BLOCK_SIZE;
+    const uint16_t offset = which == 0?sz:0;
+
+    AudioSample_t *audio;
+
+	audio = &dma.out[offset];
+
+    AudioSample_t *audioDst = &dma.out[offset];
+
+    // Handle
+	//    AudioDriver_I2SCallback(audio, iq, audioDst, sz);
+	// void AudioDriver_I2SCallback(AudioSample_t *audio, IqSample_t *iq, AudioSample_t *audioDst, int16_t blockSize)
+	// in audio_driver.c - test first with samples out or/???
+	
 }
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hi2s)
 {
+	// these are the callbacks which call into handleblock and another handler...
+	// but in the original they only handle A2 but this is maybe to sync it!
+    MchfHw_Codec_HandleBlock(0);
 }
 
 void HAL_SAI_RxHalfCpltCallback(SAI_HandleTypeDef *hi2s)
 {
+    MchfHw_Codec_HandleBlock(1);
 }
 
 static void UhsdrHWI2s_Sai32Bits(SAI_HandleTypeDef* hsai)
