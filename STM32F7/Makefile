@@ -11,7 +11,7 @@ FLASH_OFFSET=0x08000000
 
 SOURCES_S = ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f767xx.s
 
-SOURCES_C = src/main.c
+SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2s.c src/hw_i2c.c src/sai.c 
 
 SOURCES_C += sys/stubs.c sys/_sbrk.c
 SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
@@ -28,7 +28,10 @@ SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_dma.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_cortex.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_exti.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2s.c
-
+SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c.c
+SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_i2c_ex.c
+SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_sai.c
+SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal.c
 SOURCES_CPP =
 
 SOURCES = $(SOURCES_S) $(SOURCES_C) $(SOURCES_CPP)
@@ -39,6 +42,7 @@ OBJS = $(SOURCES_S:.s=.o) $(SOURCES_C:.c=.o) $(SOURCES_CPP:.cpp=.o)
 
 INCLUDES += -I src
 INCLUDES += -I ${CUBE_PATH}/Drivers/CMSIS/Include
+INCLUDES += -I ${CUBE_PATH}/Drivers/CMSIS/DSP/Include
 INCLUDES += -I ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Include
 INCLUDES += -I ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Inc
 INCLUDES += -I ${CUBE_PATH}/Drivers/BSP/STM32F7xx_Nucleo_144
@@ -69,14 +73,14 @@ MCUFLAGS = -mcpu=cortex-m7 -mlittle-endian
 MCUFLAGS += -mfloat-abi=hard -mfpu=fpv5-sp-d16
 MCUFLAGS += -mthumb
 
-DEBUG_OPTIMIZE_FLAGS = -O0 -g -ggdb3
-#DEBUG_OPTIMIZE_FLAGS = -O2
+#DEBUG_OPTIMIZE_FLAGS = -O0 -g -ggdb3
+DEBUG_OPTIMIZE_FLAGS = -O2
 
 CFLAGS = -std=c11
 CFLAGS += -Wall -Wextra --pedantic
 # generate listing files
 CFLAGS += -Wa,-aghlms=$(<:%.c=%.lst)
-CFLAGS += -DHEAP_SIZE=$(HEAP_SIZE)
+CFLAGS += -DHEAP_SIZE=$(HEAP_SIZE) -DARM_MATH_CM7
 CFLAGS += -fstack-usage
 
 CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib
@@ -87,7 +91,7 @@ CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLU
 LDFLAGS = -static $(MCUFLAGS)
 LDFLAGS += -Wl,--start-group -lgcc -lm -lc -lg -lstdc++ -lsupc++ -Wl,--end-group
 LDFLAGS += -Wl,--gc-sections -Wl,--print-gc-sections -Wl,--cref,-Map=$(@:%.elf=%.map)
-LDFLAGS += -Wl,--print-memory-usage
+LDFLAGS += -Wl,--print-memory-usage 
 LDFLAGS += -L ${CUBE_PATH}/Projects/STM32F767ZI-Nucleo/Demonstrations/SW4STM32/STM32767ZI_Nucleo/ -T STM32F767ZITx_FLASH.ld
 
 ################
