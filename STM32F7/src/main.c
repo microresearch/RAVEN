@@ -30,7 +30,14 @@ TODO: up and running with 8731 audio codec:  set up i2s and dma - using SAI?, se
 // to test audio codec what are callbacks?
 
 *in hw_i2s.c -> look back to original code!*
- 
+
+    PF6     ------> SAI1_SD_B -> DACDAT = MOSI 
+    PF7     ------> SAI1_MCLK_B -> MCLK on 8731 = 12.288MHz on board
+    PF8     ------> SAI1_SCK_B -> BCLK = SCK on board
+    PF9     ------> SAI1_FS_B -> DACLRC and ADCLRC = marked
+    PD6     ------> SAI1_SD_A -> ADCDAT = MISO
+    PB10     ------> I2C2_SCL -> SCLK 47R = SCL
+    PB11     ------> I2C2_SDA -> SDIN = SDA
 
 */
 
@@ -96,7 +103,7 @@ extern Wavetable wavtable;
   wavetable_init(&wavtable, plaguetable_simplesir, 328); // now last arg as length of table=less than 512 
   //  MX_GPIO_Init();
   MX_DMA_Init();
-  MX_I2C1_Init();
+  MX_I2C2_Init();
   MX_SAI1_Init();    
   Codec_Reset(48000);
   

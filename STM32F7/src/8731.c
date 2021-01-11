@@ -73,7 +73,7 @@ Below from codec.c .h
 
  */
 
-#define CODEC_ANA_I2C               (&hi2c1)
+#define CODEC_ANA_I2C               (&hi2c2)
 #define CODEC_ANA_SAI               SAI1
 
 
