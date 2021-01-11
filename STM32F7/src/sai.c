@@ -68,11 +68,12 @@ void MX_SAI1_Init(void)
   hsai_BlockA1.Init.Synchro = SAI_SYNCHRONOUS;
   hsai_BlockA1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE;
   hsai_BlockA1.Init.FIFOThreshold = SAI_FIFOTHRESHOLD_EMPTY;
+  hsai_BlockA1.Init.AudioFrequency = SAI_AUDIO_FREQUENCY_48K; // was not in original or?
   hsai_BlockA1.Init.SynchroExt = SAI_SYNCEXT_DISABLE;
   hsai_BlockA1.Init.MonoStereoMode = SAI_STEREOMODE;
   hsai_BlockA1.Init.CompandingMode = SAI_NOCOMPANDING;
   hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
-  HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2); // slots was 2 = should it be 1?
+  HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2); // slots was 2 = should it be 1? - all as in: https://github.com/cankosar/DSP_Target/blob/master/hw/src/sai.cpp except 16 bits here
 
   hsai_BlockB1.Instance = SAI1_Block_B;
   hsai_BlockB1.Init.AudioMode = SAI_MODEMASTER_TX;
@@ -119,6 +120,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     
     hdma_sai1_a.Instance = DMA2_Stream1;
     hdma_sai1_a.Init.Channel = DMA_CHANNEL_0;
+    //    hdma_sai1_a.Init.Request = DMA_REQUEST_SAI1_A; // was not here - from cankosar
     hdma_sai1_a.Init.Direction = DMA_PERIPH_TO_MEMORY;
     hdma_sai1_a.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_sai1_a.Init.MemInc = DMA_MINC_ENABLE;
@@ -127,7 +129,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     hdma_sai1_a.Init.Mode = DMA_CIRCULAR;
     hdma_sai1_a.Init.Priority = DMA_PRIORITY_HIGH;
     hdma_sai1_a.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-    hdma_sai1_a.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+    hdma_sai1_a.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL; // differs in https://www.cankosar.com/stm32-sai-konfiguration/
     hdma_sai1_a.Init.MemBurst = DMA_MBURST_SINGLE;
     hdma_sai1_a.Init.PeriphBurst = DMA_PBURST_SINGLE;
     HAL_DMA_Init(&hdma_sai1_a);
@@ -162,6 +164,7 @@ void HAL_SAI_MspInit(SAI_HandleTypeDef* hsai)
     /* Peripheral DMA init*/
     
     hdma_sai1_b.Instance = DMA2_Stream0;
+    //    hdma_sai1_b.Init.Request = DMA_REQUEST_SAI1_B; // was not here - from cankosar
     hdma_sai1_b.Init.Channel = DMA_CHANNEL_10;
     hdma_sai1_b.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_sai1_b.Init.PeriphInc = DMA_PINC_DISABLE;

@@ -35,9 +35,21 @@ TODO: up and running with 8731 audio codec:  set up i2s and dma - using SAI?, se
     PF7     ------> SAI1_MCLK_B -> MCLK on 8731 = 12.288MHz on board
     PF8     ------> SAI1_SCK_B -> BCLK = SCK on board
     PF9     ------> SAI1_FS_B -> DACLRC and ADCLRC = marked
+
     PD6     ------> SAI1_SD_A -> ADCDAT = MISO
+
     PB10     ------> I2C2_SCL -> SCLK 47R = SCL
     PB11     ------> I2C2_SDA -> SDIN = SDA
+
+ 11/1/2021 failure and no signals on bus... causes:
+
+- we had wrong pins and setup for I2C2 which is now corrected, to test again
+- we didn't have it.c for interrupts which included DMA so we added that now
+
+TO TEST!
+
+- problem with clock setup esp. for SAI. Here clock is setup for HSE: external high speed oscillator
+- other wrong init or code: slots in sai.c
 
 */
 
@@ -162,7 +174,7 @@ void MPU_Config(void)
 
 /** System Clock Configuration
 */
-void SystemClock_Config(void)
+void SystemClock_Config(void) // HSE is high speed external oscillator which we don't have on Nucleo?!
 {
 
   RCC_OscInitTypeDef RCC_OscInitStruct;
