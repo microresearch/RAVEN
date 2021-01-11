@@ -52,24 +52,34 @@ extern Wavetable wavtable;
 // set up controller (in main maybe) to right speeds/PLL/system clock? do we need to?
 
   /* MPU Configuration----------------------------------------------------------*/
-  MPU_Config();
+ MPU_Config();
 
   /* Enable I-Cache-------------------------------------------------------------*/
-  SCB_EnableICache();
+    SCB_EnableICache();
 
   /* Enable D-Cache-------------------------------------------------------------*/
-  SCB_EnableDCache();
+    SCB_EnableDCache();
 
   /* MCU Configuration----------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
+
   /* Ensure we have a clock configuration as in reset state, i.e. PLL clock is off and we are using HSI */
-  HAL_RCC_DeInit();
+  //  HAL_RCC_DeInit();
 
   /* Configure the system clock */
-  SystemClock_Config();
+  //    SystemClock_Config();
+
+
+  //  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+
+    /**Configure the Systick 
+    */
+  //    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+
+  /* SysTick_IRQn interrupt configuration */
+  //  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 
   
   // Enable clock on all ports
@@ -78,18 +88,17 @@ extern Wavetable wavtable;
   __GPIOC_CLK_ENABLE();
   __GPIOD_CLK_ENABLE();
   __GPIOE_CLK_ENABLE();
+  __GPIOF_CLK_ENABLE();
 
   // how do we init all/audio codec
   // do we use SAI or i2c? or is it both as codec references i2c (setup?)
 
   wavetable_init(&wavtable, plaguetable_simplesir, 328); // now last arg as length of table=less than 512 
-
+  //  MX_GPIO_Init();
   MX_DMA_Init();
   MX_I2C1_Init();
   MX_SAI1_Init();    
   Codec_Reset(48000);
-
-
   
 /// LED basic test
   
@@ -100,15 +109,15 @@ extern Wavetable wavtable;
   for(;;)
     {
       BSP_LED_Toggle(LED1);
-      for (int j = 0; j < 100000; j++)
+      for (int j = 0; j < 1000000; j++)
 	;
 
       BSP_LED_Toggle(LED2);
-      for (int j = 0; j < 100000; j++)
+      for (int j = 0; j < 1000000; j++)
 	;
 
       BSP_LED_Toggle(LED3);
-      for (int j = 0; j < 100000; j++)
+      for (int j = 0; j < 1000000; j++)
 	;
 	}
 
