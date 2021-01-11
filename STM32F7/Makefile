@@ -11,7 +11,7 @@ FLASH_OFFSET=0x08000000
 
 SOURCES_S = ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f767xx.s
 
-SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2s.c src/hw_i2c.c src/sai.c 
+SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2s.c src/hw_i2c.c src/sai.c src/wavetable.c
 
 SOURCES_C += sys/stubs.c sys/_sbrk.c
 SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c

@@ -21,6 +21,8 @@
 #define SAMPLES_PER_CENTISECOND (IQ_SAMPLE_RATE/100)
 
 typedef int16_t audio_data_t;
+typedef uint16_t u16;
+typedef unsigned char u8;
 
 typedef struct {
     __packed audio_data_t l;

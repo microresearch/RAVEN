@@ -16,6 +16,7 @@
 #include "sai.h"
 #include "main.h"
 #include <string.h>
+#include "wavetable.h"
 
 #define __UHSDR_DMAMEM
 
@@ -26,6 +27,18 @@ typedef struct
 } dma_audio_buffer_t;
 
 static __UHSDR_DMAMEM dma_audio_buffer_t dma;
+
+extern Wavetable wavtable;
+
+static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany){
+  int32_t tmp;
+
+  for (int n = 0; n < howmany; n++) {
+    tmp = inbuffer[n] * 32768.0f;
+    tmp = (tmp <= -32768) ? -32768 : (tmp >= 32767) ? 32767 : tmp;
+    outbuffer[n] = (int16_t)tmp;
+		}
+}
 
 
 /* void UhsdrHwI2s_Codec_ClearTxDmaBuffer() */
@@ -42,10 +55,11 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
     // Point to 2nd half of buffers
 	const size_t sz = IQ_BLOCK_SIZE;
     const uint16_t offset = which == 0?sz:0;
+	float lastbuffer[32];
 
     AudioSample_t *audio;
 
-	audio = &dma.out[offset];
+	//	audio = &dma.in[offset];
 
     AudioSample_t *audioDst = &dma.out[offset];
 
@@ -53,7 +67,10 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	//    AudioDriver_I2SCallback(audio, iq, audioDst, sz);
 	// void AudioDriver_I2SCallback(AudioSample_t *audio, IqSample_t *iq, AudioSample_t *audioDst, int16_t blockSize)
 	// in audio_driver.c - test first with samples out or/???
-	
+	// question of stereo -> l and r (int16_t) so is audio->l, audio->r? for in and audioDst->l for out
+	// 32 samples
+    dowavetable(lastbuffer, &wavtable, 2.0f, sz); 
+	floot_to_int(&audioDst->l,lastbuffer,sz);	
 }
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hi2s)

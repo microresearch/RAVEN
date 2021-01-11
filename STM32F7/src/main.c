@@ -17,6 +17,9 @@
 #include "i2c.h"
 #include "sai.h"
 #include "8731.h"
+#include "wavetable.h"
+#include "wavetables.h"
+
 
 /*
 
@@ -39,9 +42,13 @@ void Error_Handler(void);
 static void MPU_Config(void);
 
 
+
 int main(void)
 {
 
+extern Wavetable wavtable;
+
+  
 // set up controller (in main maybe) to right speeds/PLL/system clock? do we need to?
 
   /* MPU Configuration----------------------------------------------------------*/
@@ -73,12 +80,16 @@ int main(void)
   __GPIOE_CLK_ENABLE();
 
   // how do we init all/audio codec
-  // do we use SAI or i2c?
+  // do we use SAI or i2c? or is it both as codec references i2c (setup?)
+
+  wavetable_init(&wavtable, plaguetable_simplesir, 328); // now last arg as length of table=less than 512 
 
   MX_DMA_Init();
   MX_I2C1_Init();
   MX_SAI1_Init();    
   Codec_Reset(48000);
+
+
   
 /// LED basic test
   
