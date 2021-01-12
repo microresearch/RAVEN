@@ -13,13 +13,13 @@
 #include "stm32f7xx_nucleo_144.h"
 #include "stm32f7xx_hal_conf.h"
 
+#include "hw_i2s.h"
 #include "dma.h"
 #include "i2c.h"
 #include "sai.h"
 #include "8731.h"
 #include "wavetable.h"
 #include "wavetables.h"
-
 
 /*
 
@@ -51,12 +51,19 @@ TO TEST!
 - problem with clock setup esp. for SAI. Here clock is setup for HSE: external high speed oscillator
 - other wrong init or code: slots in sai.c
 
+12/1/2021: still no luck - added as much of clock code as works
+
+- now with hw_i2s included action on pins but no sound
+- but now not working
+
+- trying different clocks - now using STM32CubeMX to reverse engineer settings here for clock and pll -> SAI runs at 12.288 MHz which is 48k sample rate x256
+
 */
 
 #define GPIO_SetBits(PORT,PINS) { (PORT)->BSRR = (PINS); }
 #define GPIO_ResetBits(PORT,PINS) { (PORT)->BSRR = (PINS) << 16U; }
 
-void SystemClock_Config(void);
+static void SystemClock_Config(void);
 void Error_Handler(void);
 static void MPU_Config(void);
 
@@ -78,17 +85,17 @@ extern Wavetable wavtable;
 
   /* Enable D-Cache-------------------------------------------------------------*/
     SCB_EnableDCache();
-
+    
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
 
   /* Ensure we have a clock configuration as in reset state, i.e. PLL clock is off and we are using HSI */
-  //  HAL_RCC_DeInit();
+  //HAL_RCC_DeInit(); // crashes too
 
   /* Configure the system clock */
-  //    SystemClock_Config();
+  SystemClock_Config();
 
 
   //  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
@@ -112,12 +119,14 @@ extern Wavetable wavtable;
   // how do we init all/audio codec
   // do we use SAI or i2c? or is it both as codec references i2c (setup?)
 
-  wavetable_init(&wavtable, plaguetable_simplesir, 328); // now last arg as length of table=less than 512 
+  wavetable_init(&wavtable, ourtable, 512); // now last arg as length of table=less than 512 
   //  MX_GPIO_Init();
   MX_DMA_Init();
   MX_I2C2_Init();
   MX_SAI1_Init();    
   Codec_Reset(48000);
+
+  UhsdrHwI2s_Codec_StartDMA(); // this was missing and now we have action on some pins
   
 /// LED basic test
   
@@ -128,17 +137,17 @@ extern Wavetable wavtable;
   for(;;)
     {
       BSP_LED_Toggle(LED1);
-      for (int j = 0; j < 1000000; j++)
-	;
+      //      for (int j = 0; j < 100000; j++)
+      //	;
 
       BSP_LED_Toggle(LED2);
-      for (int j = 0; j < 1000000; j++)
-	;
+      //      for (int j = 0; j < 100000; j++)
+      //	;
 
       BSP_LED_Toggle(LED3);
-      for (int j = 0; j < 1000000; j++)
-	;
-	}
+      //      for (int j = 0; j < 100000; j++)
+      //	;
+      	}
 
 	return 0;
 }
@@ -169,57 +178,42 @@ void MPU_Config(void)
 
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
-
 }
 
-/** System Clock Configuration
-*/
-void SystemClock_Config(void) // HSE is high speed external oscillator which we don't have on Nucleo?!
+/**
+  * @brief System Clock Configuration
+  * @retval None
+  */
+void SystemClock_Config(void)
 {
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct;
-
-    /**Configure LSE Drive Capability 
-    */
-  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_MEDIUMLOW);
-
-    /**Configure the main internal regulator output voltage 
-    */
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  /** Configure the main internal regulator output voltage
+  */
   __HAL_RCC_PWR_CLK_ENABLE();
-
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE
-                              |RCC_OSCILLATORTYPE_LSE;
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  /** Initializes the RCC Oscillators according to the specified parameters
+  * in the RCC_OscInitTypeDef structure.
+  */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
   RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
-  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 16; //10;
-  RCC_OscInitStruct.PLL.PLLN = 432; //270;
+  RCC_OscInitStruct.PLL.PLLM = 5;
+  RCC_OscInitStruct.PLL.PLLN = 120;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 9;
-  RCC_OscInitStruct.PLL.PLLR = 2; // we have to set this to keep an assert in HAL_RCC_OscConfig from failing
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
-
-    /**Activate the Over-Drive mode 
-    */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
+  /** Initializes the CPU, AHB and APB buses clocks
+  */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
@@ -227,44 +221,32 @@ void SystemClock_Config(void) // HSE is high speed external oscillator which we 
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
-
-  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_SAI1
-                              |RCC_PERIPHCLK_SAI2|RCC_PERIPHCLK_I2C1
-                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_I2C4
-                              |RCC_PERIPHCLK_CLK48;
-  PeriphClkInitStruct.PLLSAI.PLLSAIN = 258; //192;
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_SAI1
+                              |RCC_PERIPHCLK_I2C2|RCC_PERIPHCLK_CLK48;
+  PeriphClkInitStruct.PLLSAI.PLLSAIN = 192;
   PeriphClkInitStruct.PLLSAI.PLLSAIR = 2;
-  PeriphClkInitStruct.PLLSAI.PLLSAIQ = 7; //5;
+  PeriphClkInitStruct.PLLSAI.PLLSAIQ = 5;
   PeriphClkInitStruct.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV2;
-  PeriphClkInitStruct.PLLSAIDivQ = 3; //5;
+  PeriphClkInitStruct.PLLSAIDivQ = 5;
   PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_2;
-  PeriphClkInitStruct.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI;
-  PeriphClkInitStruct.Sai2ClockSelection = RCC_SAI2CLKSOURCE_PLLSAI;
-  PeriphClkInitStruct.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
+  PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
   PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
-  PeriphClkInitStruct.I2c4ClockSelection = RCC_I2C4CLKSOURCE_PCLK1;
   PeriphClkInitStruct.Clk48ClockSelection = RCC_CLK48SOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
-
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-    /**Configure the Systick 
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
+
+
 
 void Error_Handler()
 {

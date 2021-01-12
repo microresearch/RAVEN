@@ -69,7 +69,7 @@
 /* #define HAL_HASH_MODULE_ENABLED   */
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_I2C_MODULE_ENABLED
-/* #define HAL_I2S_MODULE_ENABLED    */
+#define HAL_I2S_MODULE_ENABLED 
 /* #define HAL_IWDG_MODULE_ENABLED  */
 /* #define HAL_LPTIM_MODULE_ENABLED */
 /* #define HAL_LTDC_MODULE_ENABLED  */
@@ -90,7 +90,7 @@
 /* #define HAL_WWDG_MODULE_ENABLED   */
 #define HAL_CORTEX_MODULE_ENABLED
 /* #define HAL_PCD_MODULE_ENABLED */
-/* #define HAL_HCD_MODULE_ENABLED */
+/* #define HAL_HCD_MODULE_ENABLuED */
 
 
 /* ########################## HSE/HSI Values adaptation ##################### */

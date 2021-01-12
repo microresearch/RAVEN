@@ -169,6 +169,7 @@ __IO mchf_codec_t mchf_codecs[1];
 // FIXME: for now we use 32bits transfer size, does not change the ADC/DAC resolution
 // which is 24 bits in any case. We should reduce finally to 24bits (which requires also the I2S/SAI peripheral to
 // use 24bits)
+//#define USE_32_AUDIO_BITS
 
 
 #if defined(USE_32_AUDIO_BITS)
@@ -210,11 +211,13 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
 
 
         // Reg 04: Analog Audio Path Control (DAC sel, ADC line, Mute Mic)
-        Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,
-                W8731_ANLG_AU_PATH_CNTR_DACSEL |
-                W8731_ANLG_AU_PATH_CNTR_INSEL_LINE |
-                W8731_ANLG_AU_PATH_CNTR_MUTEMIC);
+	        Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,
+				    W8731_ANLG_AU_PATH_CNTR_DACSEL |
+	      W8731_ANLG_AU_PATH_CNTR_INSEL_LINE |
+				    W8731_ANLG_AU_PATH_CNTR_MUTEMIC);
 
+	//        Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,0xD0);
+	
         // Reg 05: Digital Audio Path Control(all filters disabled)
         // De-emphasis control, bx11x - 48kHz
         //                      bx00x - off
@@ -223,8 +226,8 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
         //
         Codec_WriteRegister(hi2c, W8731_DIGI_AU_PATH_CNTR,W8731_DEEMPH_CNTR);
 
-        // Reg 06: Power Down Control (Clk off, Osc off, Mic off))
-        Codec_WriteRegister(hi2c, W8731_POWER_DOWN_CNTR,W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF);
+        // Reg 06: Power Down Control (Clk off, Osc off, Mic off)) // we need the clock
+	//        Codec_WriteRegister(hi2c, W8731_POWER_DOWN_CNTR,W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF);
 
 
         // Reg 07: Digital Audio Interface Format (i2s, 16/32 bit, slave)
@@ -244,8 +247,8 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
                 break;
         }
 
-        Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,W8731_DIGI_AU_INTF_FORMAT_I2S_PROTO|size_reg_val);
-
+	        Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,W8731_DIGI_AU_INTF_FORMAT_I2S_PROTO|size_reg_val);
+	//        Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,0x43);
 
         // Reg 08: Sampling Control (Normal, 256x, 48k ADC/DAC)
         // master clock: 12.288 Mhz
@@ -270,6 +273,10 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
 
         Codec_WriteRegister(hi2c, W8731_SAMPLING_CNTR,samp_reg_val);
 
+	//	Codec_WriteRegister(hi2c, 5, 0b00100);      // DAC unmuted - from other code
+	//	Codec_WriteRegister(hi2c, 4, 0b00010000);    // DAC selected
+
+	
         // Reg 09: Active Control
         // and now we start the Codec Digital Interface
         Codec_WriteRegister(hi2c, W8731_ACTIVE_CNTR,0x0001);
@@ -294,8 +301,10 @@ uint32_t Codec_Reset(uint32_t AudioFreq)
         mchf_codecs[0].present = true;
 
 	//        AudioPA_Enable(true);
-        Codec_VolumeSpkr(0); // mute speaker
+        Codec_VolumeSpkr(255); // mute speakerNOT
 	//        Codec_VolumeLineOut(ts.txrx_mode); // configure lineout according to mode
+	Codec_WriteRegister(CODEC_ANA_I2C, W8731_RIGHT_HEADPH_OUT, 100 | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
+	Codec_WriteRegister(CODEC_ANA_I2C, W8731_LEFT_HEADPH_OUT, 100 | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
     }
     return retval;
 }
@@ -338,7 +347,7 @@ void Codec_VolumeLineOut(uint8_t txrx_mode)
   //    UNUSED(txrx_mode);
     // we have a special shared lineout/headphone on the OVI40.
     // And since we have a dedidacted IQ codec, there is no need to switch of the lineout or headphones here
-  //    Codec_WriteRegister(CODEC_ANA_I2C, W8731_RIGHT_HEADPH_OUT, lov | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
+  //     Codec_WriteRegister(CODEC_ANA_I2C, W8731_RIGHT_HEADPH_OUT, lov | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
 }
 
 /**

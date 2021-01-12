@@ -14,10 +14,10 @@ FLASH = st-flash
 
 SOURCES_S = ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f767xx.s
 
-SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/sai.c src/wavetable.c src/stm32f7xx_hal_msp.c src/stm32f7xx_it.c
+SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/hw_i2s.c src/sai.c src/wavetable.c src/stm32f7xx_hal_msp.c src/stm32f7xx_it.c src/system_stm32f7xx.c
 
 SOURCES_C += sys/stubs.c sys/_sbrk.c
-SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
+#SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c
 SOURCES_C += ${CUBE_PATH}/Drivers/BSP/STM32F7xx_Nucleo_144/stm32f7xx_nucleo_144.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_gpio.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32F7xx_HAL_Driver/Src/stm32f7xx_hal_adc.c
@@ -106,7 +106,7 @@ all: $(PROJECT).bin $(PROJECT).hex $(PROJECT).asm
 
 clean:
 	$(RM) $(OBJS) $(OBJS:$.o=$.lst) $(OBJS:$.o=$.su) $(PROJECT).elf $(PROJECT).bin $(PROJECT).hex $(PROJECT).map $(PROJECT).asm
-
+u
 BMP_DEVICE ?= /dev/ttyACM0
 JLINK_CPUNAME ?= STM32F737ZI
 

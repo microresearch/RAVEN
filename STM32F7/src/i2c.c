@@ -56,7 +56,18 @@ void MX_I2C2_Init(void)
 {
 
   hi2c2.Instance = I2C2;
-  hi2c2.Init.Timing = 0x20404768;
+  //hi2c2.Init.Timing = 0x20404768; //we want /* I2C clock speed configuration (in Hz)  */#define I2C_SPEED                        100000 = 100k
+  //    hi2c2.Init.Timing = 0x20303E5D;
+  //  hi2c2.Init.Timing = 0x00506682;
+
+  //  hi2c2.Init.Timing = 0x20404768;
+
+  hi2c2.Init.Timing = 0x00303D5B; // >>>???
+
+  //hi2c2.Init.Timing = 0x102023B4; // half above
+  //  0x10707DBC;
+  //  hi2c2.Init.Timing = 0x10707DBC; // from other
+  //  hi2c2.Init.Timing =  0x00D00E28;  /* (Rise time = 120ns, Fall time = 25ns)
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c2.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
