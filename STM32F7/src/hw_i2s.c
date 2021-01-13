@@ -82,9 +82,10 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	// in audio_driver.c - test first with samples out or/???
 	// question of stereo -> l and r (int16_t) so is audio->l, audio->r? for in and audioDst->l for out
 	// 32 samples
-    dowavetable(lastbuffer, &wavtable, 1000.0f, sz/2); 
-	floot_to_int(pbuf,lastbuffer,sz/2);	
-	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
+    dowavetable(lastbuffer, &wavtable, 10.0f, sz/2); 
+	//	floot_to_int(audioDst,lastbuffer,sz/2);
+	
+	//	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
 
 }
 
