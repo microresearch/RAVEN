@@ -20,9 +20,16 @@
 
 #define __UHSDR_DMAMEM
 
+/*
+typedef struct {
+    __packed audio_data_t l;
+    __packed audio_data_t r;
+} AudioSample_t;
+*/
+
 typedef struct
 {
-    AudioSample_t out[2*AUDIO_BLOCK_SIZE]; // 2 x 32 samples =64 but left and right
+    AudioSample_t out[2*AUDIO_BLOCK_SIZE]; // 2 x 32 samples =64 left and 64 right
     AudioSample_t in[2*AUDIO_BLOCK_SIZE];
 } dma_audio_buffer_t;
 
@@ -46,6 +53,7 @@ static inline void audio_comb_stereo(int16_t sz, int16_t *dst, int16_t *lsrc, in
 	{
 		*dst++ = *lsrc++;
 		sz--;
+		//*dst++ = 0;
 		*dst++ = (*rsrc++);
 		sz--;
 	}
@@ -67,6 +75,7 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
     // Point to 2nd half of buffers
 	const size_t sz = IQ_BLOCK_SIZE;
     const uint16_t offset = which == 0?sz:0;
+	uint16_t x;
 	float lastbuffer[32];
 	int16_t pbuf[32];
 	
@@ -82,11 +91,13 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	// in audio_driver.c - test first with samples out or/???
 	// question of stereo -> l and r (int16_t) so is audio->l, audio->r? for in and audioDst->l for out
 	// 32 samples
-    dowavetable(lastbuffer, &wavtable, 10.0f, sz/2); 
-	//	floot_to_int(audioDst,lastbuffer,sz/2);
-	
+    dowavetable(lastbuffer, &wavtable, 220.0f, sz); 
+	floot_to_int(pbuf,lastbuffer,sz);
 	//	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
-
+	for (x=0;x<sz;x++){
+		audioDst[x].l=pbuf[x];
+		audioDst[x].r=pbuf[x];
+	}
 }
 
 void HAL_SAI_RxCpltCallback(SAI_HandleTypeDef *hi2s)

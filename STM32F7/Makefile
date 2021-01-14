@@ -106,7 +106,7 @@ all: $(PROJECT).bin $(PROJECT).hex $(PROJECT).asm
 
 clean:
 	$(RM) $(OBJS) $(OBJS:$.o=$.lst) $(OBJS:$.o=$.su) $(PROJECT).elf $(PROJECT).bin $(PROJECT).hex $(PROJECT).map $(PROJECT).asm
-u
+
 BMP_DEVICE ?= /dev/ttyACM0
 JLINK_CPUNAME ?= STM32F737ZI
 
