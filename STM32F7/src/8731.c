@@ -226,8 +226,8 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
         //
 		Codec_WriteRegister(hi2c, W8731_DIGI_AU_PATH_CNTR,W8731_DEEMPH_CNTR);
 
-        // Reg 06: Power Down Control (Clk off, Osc off, Mic off)) // we need the clock
-	        Codec_WriteRegister(hi2c, W8731_POWER_DOWN_CNTR,W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF);
+        // Reg 06: Power Down Control (Clk off, Osc off, Mic off)) 
+		Codec_WriteRegister(hi2c, W8731_POWER_DOWN_CNTR,W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF);
 
 
         // Reg 07: Digital Audio Interface Format (i2s, 16/32 bit, slave)
@@ -247,13 +247,13 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
                 break;
         }
 
-			Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,W8731_DIGI_AU_INTF_FORMAT_I2S_PROTO|size_reg_val); // reg 07 MASTER 0x40
+	Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,W8731_DIGI_AU_INTF_FORMAT_I2S_PROTO|size_reg_val); // reg 07 MASTER 0x40
 	//      Codec_WriteRegister(hi2c, W8731_DIGI_AU_INTF_FORMAT,0x43);
 
         // Reg 08: Sampling Control (Normal, 256x, 48k ADC/DAC)
         // master clock: 12.288 Mhz
         uint16_t samp_reg_val;
-
+	//	AudioFreq=96000;
         switch (AudioFreq)
         {
         case 32000:
@@ -270,16 +270,25 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
             samp_reg_val = W8731_SAMPLING_CNTR_48K;
             break;
         }
+	//	samp_reg_val=0x10 << 2;
+	Codec_WriteRegister(hi2c, W8731_SAMPLING_CNTR,samp_reg_val); // doesn't seem to work for any vals
+	// from WARPS:
+	// According to the WM8731 datasheet, the 32kHz and 96kHz modes require the
+	// master clock to be at 12.288 MHz (384 fs / 128 fs). The STM32F4 I2S clock
+	// is always at 256 fs. So the 32kHz and 96kHz modes are achieved by
+	// pretending that we are doing 48kHz, but with a slower or faster master
+	// clock. //2/3 slower for 32K?
+	// 8.192 MHz?
+	// now fixed in main.c
 
-	Codec_WriteRegister(hi2c, W8731_SAMPLING_CNTR,samp_reg_val);
-
+	
 	//	Codec_WriteRegister(hi2c, 5, 0b00100);      // DAC unmuted - from other code
 	//	Codec_WriteRegister(hi2c, 4, 0b00010000);    // DAC selected
 
 	
         // Reg 09: Active Control
         // and now we start the Codec Digital Interface
-	Codec_WriteRegister(hi2c, W8731_ACTIVE_CNTR,0x0001);
+		Codec_WriteRegister(hi2c, W8731_ACTIVE_CNTR,0x0001);
     }
     return retval;
 
@@ -298,10 +307,10 @@ uint32_t Codec_Reset(uint32_t AudioFreq)
 
     if (retval == 0)
     {
-        mchf_codecs[0].present = true;
+      //        mchf_codecs[0].present = true;
 
 	//        AudioPA_Enable(true);
-        Codec_VolumeSpkr(100); // mute speakerNOT
+        //Codec_VolumeSpkr(16); // mute speakerNOT
 	//        Codec_VolumeLineOut(ts.txrx_mode); // configure lineout according to mode
 	//	Codec_WriteRegister(CODEC_ANA_I2C, W8731_RIGHT_HEADPH_OUT, 100 | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
 	//	Codec_WriteRegister(CODEC_ANA_I2C, W8731_LEFT_HEADPH_OUT, 100 | W8731_HEADPH_OUT_ZCEN | W8731_HEADPH_OUT_HPBOTH );   // value selected for 0.5VRMS at AGC setting
