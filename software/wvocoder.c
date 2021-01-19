@@ -126,6 +126,7 @@ class Limiter {
 
 // TODO - *******filter banks*, limiter?for later? -> all compiles but neeed finish wfilterbank and add limiter if necessary
 // left all decimation out for now... but means need calc new coeffs
+// these have been done I think
 
 void Vocoder_Init(float sample_rate) {
   FilterBank_Init(&carrier_filter_bank_,sample_rate);

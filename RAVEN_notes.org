@@ -163,7 +163,6 @@ which also has vocoder code...
 
 *** sc vocoder
 
-
 bark/filter
 
 ** what we want to achieve:
