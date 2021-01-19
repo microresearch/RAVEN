@@ -215,7 +215,7 @@ void Vocoder_Process(
 
     float* carrierx = carrier_filter_bank_.band_[i].samples;
     float* modulatorx = modulator_filter_bank_.band_[i].samples;
-    float* envelopex = tmp_;  // ??????
+    float* envelopex = tmp_;  
 
     EnvF_Process(&follower_[i], modulatorx, envelopex, band_size);
     
@@ -228,9 +228,15 @@ void Vocoder_Process(
       vocoder_gain += vocoder_gain_increment;
       carrier_gain += carrier_gain_increment;
       //      if (i==0) out[j]=carrierx[j];
-      out[j]+=carrierx[j];
+      //      out[j]+=carrierx[j]; // ????
   }
         previous_gain_[i] = gain_[i];
   }
+
+  //  carrier_filter_bank_.Synthesize(out, size);
+  //void FilterBank_Synthesize(Filterbank *Filterbankk, float* out, u8 size) {
+
+  //  limiter_.Process(out, 1.4f, size);
+
 }  
 

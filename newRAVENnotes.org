@@ -1,0 +1,205 @@
+* TODO
+
+- basic platform structure with audio.c and process
+
+take from worm - any input process (also vocoder input), generate excitation, apply transformation/vocoder
+
+- start with vocoder from warps
+- then Mindlin/Fletcher and other simulations
+- overview of basic code and what is working from before
+- layout and basic operations
+- processing plan and flow
+- question of platform/speed
+
+
+* platform
+
+STM32F767 double precision is our development board.
+
+Smaller STM32F7 is 767VI/VG
+
+left and right audio in to WM8731
+
+Codec is working with test code but has 172.8 MHZ clock (not max of 216) 168 was 405 - will this be fast enough? H743 is 480MHz
+
+TODO:
+
+- ADCs working and any other peripherals (trigger in for example)
+- question of samplerate as 48k or 32k? (WORM was 32k, WARPS is 96k!)
+
+** refs
+
+https://wunderkis.de/stm32cube3/index.html
+
+https://longer-vision-robot.gitbook.io/stm32f767zi-full-stack/chapter-2.-programming-for-stm32/2.5-test-on-stm32f767zi-blinky
+
+https://github.com/dpiegdon/STM32F767ZI-Nucleo-144 - altered makefile on x220 for stlink
+
+https://longer-vision-robot.gitbook.io/stm32f767zi-full-stack/chapter-2.-programming-for-stm32/2.5-test-on-stm32f767zi-blinky 
+https://github.com/dpiegdon/STM32F767ZI-Nucleo-144  - seems to have usable makefile
+Also: https://github.com/bbrown1867/stm32-makefile 
+
+https://community.st.com/s/question/0D53W00000EbURk/stm32f767-cmsis-dsp-keil-error
+https://bytefreaks.net/tag/stm32f767
+https://gitlab.com/caesar-lab/stm32f7-legacy-library/-/tree/master/Example/f767zi-nucleo/LED_Example
+
+https://www.eevblog.com/forum/projects/stm32-sai-how-to-configure-that-bastard-for-i2s!/ 
+
+Porting this one: [SOLVED] Problem with I2S+DMA on Nucleo H743ZI2 with WM8731 Audio Codec but is for H7 and not our F7 where DMA is different - ABANDON!
+
+https://github.com/df8oe/UHSDR/tree/active-devel/mchf-eclipse/drivers/audio/codec 
+
+SAI: also H7: https://www.cankosar.com/stm32-sai-konfiguration/ 
+
+https://github.com/cankosar/DSP_Target 
+https://github.com/cankosar/DSP_Target/blob/master/hw/src/cs4272.cpp 
+
+Or use other audio codecs? WM8994 - but is BGA. CS4272 which is more complex.
+
+What was the smaller 100 pin? STM32F767VI/VG 765 is double precision too H743 also but is big? 144 pin.
+
+ADC: https://skybluetrades.net/stm32-timer-adc-dma-1/ 
+
+https://forum.pjrc.com/archive/index.php/t-53854.html 
+
+* modes
+
+- vocoders
+- LPC swoppings, bends, morphs and filters -> where was worm/test code? here in SOFTWARE -> notes on lpc in older notes
+- banks of LPC coefficients
+- some bends of WORM speech codecs
+- various throat sims, glottal and trachea models
+- raven works = physical models
+- others
+
+how to swop across modes so eg. use lpc reverse filtered excitation for vocoder
+
+** excitation and filter/transformation
+
+excitation side/filter side with controls for each:
+
+*** exc: 16 or 32 modes
+
+- basic input
+- processings of basic input eg. inverse filtering, pitch following, other detection for exc changes (noise detection)
+- wavetables
+- glottal physical simulations
+- original speech synth maybe inv filtered or without LPC filter eg. basic impulsive sources from klatt and co.
+- vocoded bands 
+- dry/wet feedback - delayed feedback - this would be extra set of modes like mirrored modes
+- vosim/others/impulse etc.
+- noise mix
+
+*** transformation: 16 or 32 modes
+
+- channel vocoder/s - bandpass a la warps (with different sets of bandpasses perhaps eg. follow EMS2000/5000) and FFT. exc input as exc, voice input as input
+- phase vocoder?
+- LPC swops, bends
+- apply WORM speech filters
+- throat/tube simulations
+- other physical models
+- apply extracted raven and other LPC co-effecients
+- bandpass filters - mix and manipulate!
+- no transform
+
+* older/where we are/what software is written or is close
+
+** software
+
+*** vocoding
+
+**** warps
+
+- we made some progress - calcs for coeffs in filter_my.py but in warps is different sample rates/filters and decimation etc. for varying bandwidth (warps general samplerate is 96K)
+
+main action in callback:  modulator.Process((ShortFrame*)input, (ShortFrame*)output, n);
+
+formant shift and envelope actions...
+
+*** LPC
+
+*** raven/bird simulations
+
+*** glottal models
+
+*** throat/tubes
+
+*** etc
+
+** older notes
+
+*** what are the jacks and controls?
+
+- two inputs with incoming volumes
+- one output
+
+2x or 3x x/y cv and knobs?
+
+16x valueY eg for vocoder/throat
+
+mode
+
+speed/update speed - when far right then we use SPEED in which is TRIGGER IN 
+
+or for vocoder x-channel z-parameter y-value [but maybe there are not so many parameters]
+
+maybe graphic display as on o+c: OLED (but question there of SPI issues - so can use i2c OLED)
+
+or we use 16x leds exposed under soldermask - but how we select which to show (on knob change but there could be multiple simultaneous changes)
+
+
+* Mindlin email
+
+https://github.com/zekearneodo/syrinxsynth
+
+Dear Martin,
+
+cool project! i´d love to follow your advances. And if some of my codes could be of any help,
+please let me know. Also notice that in the webpage of my my lab there is some soft available for
+downloading (www.lsd.df.uba.ar).
+
+From the dynamics of the labia to the flow, one has to multiply the
+average velocity of the air through the glottis and the transverse
+glottal area, which is proportional to (constant-x). For a proxy of
+the velocity you can the air sac pressure (as as a proxy for that, the
+envelope of the sound you want to mimic). As a first approach, for
+S(t) use the U(t) that you are generating. Then you can enrich the
+sound by using a linear combination that includes U´. you wont be able
+to fit parameters of a model from first principles.
+
+Please feel free to contact me if you need any help.
+And I would love to hear about your project!
+
+cheers,
+
+Gabo
+
+On Mon, Sep 19, 2016 at 6:36 PM, <m@1010.co.uk> wrote:
+
+    Dear Gabriel Mindlin,
+
+    I'm an artist working with sound and electronics. I'm currently
+    working on the artificial (software) synthesis of crow or raven
+    calls and I've found your book and associated papers a fantastic
+    and informative resource. I have almost no background in
+    mathematics but with some help I'm working through the equations
+    in the book as a first step towards the project. One point I'm
+    having problems with is the coupling between source and vocal
+    tract. I understand the reflections element but neither how to
+    derive the time variations of flow (p.84 U(t)) from x, nor (p.91)
+    exactly what the function within the pressure perturbation s(t)
+    could be ( f(x,dx/dt) which depends on the kinematics of the
+    labia.
+
+    Apologies in advance if I missed something here and look forward
+    to any help or answers you can offer!
+
+    best wishes
+
+    Martin Howse
+
+* refs
+
+https://github.com/zekearneodo/syrinxsynth
+
+https://medium.com/@IckeIlknur/central-pattern-generators-to-synthesize-birdsongs-f0d09d6936c0
