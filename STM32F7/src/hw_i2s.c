@@ -17,6 +17,7 @@
 #include "main.h"
 #include <string.h>
 #include "wavetable.h"
+#include "process.h"
 
 #define __UHSDR_DMAMEM
 
@@ -47,19 +48,11 @@ static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany)
 		}
 }
 
-static inline void audio_comb_stereo(int16_t sz, int16_t *dst, int16_t *lsrc, int16_t *rsrc)
-{
-	while(sz)
-	{
-		*dst++ = *lsrc++;
-		sz--;
-		//*dst++ = 0;
-		*dst++ = (*rsrc++);
-		sz--;
-	}
+inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany){
+  for (int n = 0; n < howmany; n++) {
+    outbuffer[n]=(float)(inbuffer[n])/32768.0f;
+  }
 }
-
-
 
 /* void UhsdrHwI2s_Codec_ClearTxDmaBuffer() */
 /* { */
@@ -76,12 +69,12 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	const size_t sz = IQ_BLOCK_SIZE;
     const uint16_t offset = which == 0?sz:0;
 	uint16_t x;
-	float lastbuffer[32];
-	int16_t pbuf[32];
+	float fbuffer[32],flinbuffer[32],frinbuffer[32];
+	int16_t pbuf[32], linbuf[32],rinbuf[32];
 	
     AudioSample_t *audio;
 
-	//	audio = &dma.in[offset];
+	audio = &dma.in[offset];
 
     AudioSample_t *audioDst = &dma.out[offset];
 
@@ -91,12 +84,22 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	// in audio_driver.c - test first with samples out or/???
 	// question of stereo -> l and r (int16_t) so is audio->l, audio->r? for in and audioDst->l for out
 	// 32 samples
-    dowavetable(lastbuffer, &wavtable, 440.0f, sz); 
-	floot_to_int(pbuf,lastbuffer,sz);
+	//int_to_floot
+
+	// split left and right incoming
+	for (x=0;x<sz;x++){
+		linbuf[x]=audio[x].l;
+		rinbuf[x]=audio[x].r;
+	}
+	int_to_floot(linbuf,flinbuffer,sz);
+	int_to_floot(rinbuf,frinbuffer,sz);
+	process(flinbuffer,frinbuffer,fbuffer,sz); // in process.c
+	//	dowavetable(fbuffer, &wavtable, 440.0f, sz); 
+	floot_to_int(pbuf,fbuffer,sz);
 	//	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
 	for (x=0;x<sz;x++){
 		audioDst[x].l=pbuf[x];
-		audioDst[x].r=pbuf[x];
+		audioDst[x].r=pbuf[x]; // both l and r for the moment
 	}
 }
 

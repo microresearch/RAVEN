@@ -21,6 +21,7 @@
 #include "8731.h"
 #include "wavetable.h"
 #include "wavetables.h"
+#include "wvocoder.h"
 
 #define USB_OverCurrent_Pin GPIO_PIN_7
 #define USB_OverCurrent_GPIO_Port GPIOG
@@ -167,8 +168,10 @@ extern Wavetable wavtable;
   HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
 
   
-  wavetable_init(&wavtable, ourtable, 512); // now last arg as length of table=less than 512 
-
+  wavetable_init(&wavtable, crowtable, 142); // now last arg as length of table=less than 512 
+  Vocoder_Init(32000.0f);
+  BANDS_Init_();
+  
     MX_DMA_Init();
     MX_I2C2_Init();
 
@@ -177,7 +180,7 @@ extern Wavetable wavtable;
 
   UhsdrHwI2s_Codec_StartDMA(); // this was missing and now we have action on some pins
 
-  Codec_Reset(32000);
+  Codec_Reset(AUDIO_SAMPLE_RATE);
   
 /// LED basic test
   

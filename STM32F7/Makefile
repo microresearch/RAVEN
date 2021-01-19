@@ -14,7 +14,7 @@ FLASH = st-flash
 
 SOURCES_S = ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/gcc/startup_stm32f767xx.s
 
-SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/hw_i2s.c src/sai.c src/wavetable.c src/stm32f7xx_hal_msp.c src/stm32f7xx_it.c src/system_stm32f7xx.c
+SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/hw_i2s.c src/sai.c src/wavetable.c src/stm32f7xx_hal_msp.c src/stm32f7xx_it.c src/system_stm32f7xx.c src/process.c src/wvocoder.c src/wfilterbank.c src/svf.c
 
 SOURCES_C += sys/stubs.c sys/_sbrk.c
 #SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32F7xx/Source/Templates/system_stm32f7xx.c

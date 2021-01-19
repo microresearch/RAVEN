@@ -156,8 +156,8 @@ typedef enum
 #define W8731_POWER_DOWN_CNTR_MCHF_ALL_ON    (W8731_POWER_DOWN_CNTR_CLKOUTPD|W8731_POWER_DOWN_CNTR_OSCPD)
 // all on but osc and out, since we don't need it, clock comes from STM
 
-#define W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF    (W8731_POWER_DOWN_CNTR_CLKOUTPD|W8731_POWER_DOWN_CNTR_OSCPD|W8731_POWER_DOWN_CNTR_MICPD)
-
+//#define W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF    (W8731_POWER_DOWN_CNTR_CLKOUTPD|W8731_POWER_DOWN_CNTR_OSCPD|W8731_POWER_DOWN_CNTR_MICPD
+#define W8731_POWER_DOWN_CNTR_MCHF_MIC_OFF    (W8731_POWER_DOWN_CNTR_CLKOUTPD|W8731_POWER_DOWN_CNTR_OSCPD)
 typedef struct
 {
     bool present;
@@ -199,10 +199,10 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
     if( retval == HAL_OK)
     {
         // Reg 00: Left Line In (0dB, mute off)
-        Codec_WriteRegister(hi2c, W8731_LEFT_LINE_IN,0x001F);
+      Codec_WriteRegister(hi2c, W8731_LEFT_LINE_IN,0x001F);
 
         // Reg 01: Right Line In (0dB, mute off)
-        Codec_WriteRegister(hi2c, W8731_RIGHT_LINE_IN,0x001F);
+      Codec_WriteRegister(hi2c, W8731_RIGHT_LINE_IN,0x001F);
 
         // Reg 02: Left Headphone out (0dB)
         //Codec_WriteRegister(0x02,0x0079);
@@ -213,10 +213,11 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
         // Reg 04: Analog Audio Path Control (DAC sel, ADC line, Mute Mic)
 	        Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,
 				    W8731_ANLG_AU_PATH_CNTR_DACSEL |
-	    W8731_ANLG_AU_PATH_CNTR_INSEL_LINE |
-				    W8731_ANLG_AU_PATH_CNTR_MUTEMIC);
+				    //				    W8731_ANLG_AU_PATH_CNTR_INSEL_LINE) |
+				    W8731_ANLG_AU_PATH_CNTR_INSEL_MIC |
+				    W8731_ANLG_AU_PATH_CNTR_MICBBOOST); // so now we have mic in from board
 
-		//		Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,0x08); // try bypass
+		//Codec_WriteRegister(hi2c, W8731_ANLG_AU_PATH_CNTR,0x08); // try bypass
 	
         // Reg 05: Digital Audio Path Control(all filters disabled)
         // De-emphasis control, bx11x - 48kHz
@@ -271,7 +272,7 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
             break;
         }
 	//	samp_reg_val=0x10 << 2;
-	Codec_WriteRegister(hi2c, W8731_SAMPLING_CNTR,samp_reg_val); // doesn't seem to work for any vals
+	Codec_WriteRegister(hi2c, W8731_SAMPLING_CNTR,samp_reg_val); // doesn't seem to work for any vals so we need do clock-> DONE
 	// from WARPS:
 	// According to the WM8731 datasheet, the 32kHz and 96kHz modes require the
 	// master clock to be at 12.288 MHz (384 fs / 128 fs). The STM32F4 I2S clock

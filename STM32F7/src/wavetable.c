@@ -3,6 +3,7 @@
 
 #include "stdio.h"
 #include <math.h>
+#include "main.h"
 #include "wavetable.h"
 
 Wavetable wavtable;
