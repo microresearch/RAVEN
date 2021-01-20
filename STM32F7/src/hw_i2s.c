@@ -48,7 +48,7 @@ static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany)
 		}
 }
 
-inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany){
+static inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany){
   for (int n = 0; n < howmany; n++) {
     outbuffer[n]=(float)(inbuffer[n])/32768.0f;
   }

@@ -170,7 +170,7 @@ extern Wavetable wavtable;
   
   wavetable_init(&wavtable, crowtable, 142); // now last arg as length of table=less than 512 
   Vocoder_Init(32000.0f);
-  BANDS_Init_();
+  //  BANDS_Init_();
   
     MX_DMA_Init();
     MX_I2C2_Init();

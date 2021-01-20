@@ -51,7 +51,7 @@ void EnvF_set_freeze(EnvelopeFollower* env, bool freeze) {
   env->freeze_ = freeze;
 }
   
-void EnvF_Process(EnvelopeFollower* env, const float* in, float* out, size_t size) {
+void EnvF_Process(EnvelopeFollower* env, float* in, float* out, size_t size) {
   float envelope = env->envelope_;
   float attack = env->freeze_ ? 0.0f : env->attack_;
   float decay = env->freeze_ ? 0.0f : env->decay_;
@@ -69,7 +69,7 @@ void EnvF_Process(EnvelopeFollower* env, const float* in, float* out, size_t siz
   env->peak_ += (error > 0.0f ? 0.5f : 0.1f) * error;
 }
   
-inline float EnvF_peak(EnvelopeFollower* env) { return env->peak_; }
+static inline float EnvF_peak(EnvelopeFollower* env) { return env->peak_; }
 
 typedef struct BandGain {
   float carrier;
@@ -155,25 +155,25 @@ void Vocoder_Init(float sample_rate) {
 }
 
 void Vocoder_Process(
-    const float* modulator,
-    const float* carrier,
+    float* modulator,
+    float* carrier,
     float* out,
     u8 size) {
   // Run through filter banks.
-    FilterBank_Analyze(&modulator_filter_bank_, modulator, size);
-    FilterBank_Analyze(&carrier_filter_bank_, carrier, size);
-  
+      FilterBank_Analyze(&modulator_filter_bank_, modulator, size);
+      FilterBank_Analyze(&carrier_filter_bank_, carrier, size);
+           
   // Set the attack/release release_time of envelope followers.
   //float f = 80.0f * SemitonesToRatio(-72.0f * release_time_); // what kind of figures come out here?
     float f=80.0f;
-  for (int32_t i = 0; i < kNumBands; ++i) {
+    for (int32_t i = 0; i < kNumBands; ++i) {
     float decay = f / modulator_filter_bank_.band_[i].sample_rate;
     EnvF_set_attack(&follower_[i],decay * 2.0f);
     EnvF_set_decay(&follower_[i],decay * 0.5f);
     EnvF_set_freeze(&follower_[i],release_time_ > 0.995f);
     //    f *= 1.2599f;  // 2 ** (4/12.0), a third octave.
   }
-  
+    
   // Compute the amplitude (or modulation amount) in all bands.
   //  formant_shift_=adc_buffer[SELY]/4096.0f;
   formant_shift_=0.0f;
@@ -181,9 +181,10 @@ void Vocoder_Process(
   formant_shift_amount *= (2.0f - formant_shift_amount);
   formant_shift_amount *= (2.0f - formant_shift_amount);
 //  float envelope_increment = 4.0f * SemitonesToRatio(-48.0f * formant_shift_);
-  float envelope_increment = 4.0f;
+  float envelope_increment = 0.1f;
   float envelope = 0.0f;
-  const float kLastBand = kNumBands - 1.0001f;
+  float kLastBand = kNumBands - 1.0001f;
+  
   for (u8 i = 0; i < kNumBands; ++i) {
     float source_band = envelope;
     CONSTRAIN(source_band, 0.0f, kLastBand);
@@ -192,9 +193,10 @@ void Vocoder_Process(
     //  float x ## _fractional = x - static_cast<float>(x ## _integral);
     int32_t source_band_integral= (int32_t) source_band;
     float source_band_fractional= source_band - (float)source_band_integral;
-
+    //    source_band_integral=1;
     float a = EnvF_peak(&follower_[source_band_integral]);
     float b = EnvF_peak(&follower_[source_band_integral + 1]);
+    //    float a=1.0f; float b=1.0f;
     float band_gain = (a + (b - a) * source_band_fractional); // fractional part
     float attenuation = envelope - kLastBand;
     if (attenuation >= 0.0f) {
@@ -205,13 +207,13 @@ void Vocoder_Process(
     gain_[i].carrier = band_gain * formant_shift_amount;
     gain_[i].vocoder = 1.0f - formant_shift_amount;
   }
-    
+  
   for (u8 x=0;x<32;x++) out[x]=0.0f;
 
-    
+      
   for (u8 i = 0; i < kNumBands; ++i) {
     u8 band_size = size;// / modulator_filter_bank_.band_[i].decimation_factor;
-    const float step = 1.0f / (float)(band_size);
+    float step = 1.0f / (float)(band_size);
 
     float* carrierx = carrier_filter_bank_.band_[i].samples;
     float* modulatorx = modulator_filter_bank_.band_[i].samples;
@@ -224,7 +226,7 @@ void Vocoder_Process(
     float carrier_gain = previous_gain_[i].carrier;
     float carrier_gain_increment = (gain_[i].carrier - carrier_gain) * step;
     for (u8 j = 0; j < band_size; ++j) {
-      carrierx[j] *= (carrier_gain + vocoder_gain * envelopex[j]);
+        carrierx[j] *= (carrier_gain + vocoder_gain * envelopex[j]);
       vocoder_gain += vocoder_gain_increment;
       carrier_gain += carrier_gain_increment;
       //      if (i==0) out[j]=carrierx[j];
@@ -232,9 +234,9 @@ void Vocoder_Process(
   }
         previous_gain_[i] = gain_[i];
   }
-
+    
   //  carrier_filter_bank_.Synthesize(out, size);
-  //void FilterBank_Synthesize(Filterbank *Filterbankk, float* out, u8 size) {
+  FilterBank_Synthesize(&carrier_filter_bank_, out, size); // same as above with out[j] ???
 
   //  limiter_.Process(out, 1.4f, size);
 
