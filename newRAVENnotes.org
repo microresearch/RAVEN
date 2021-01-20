@@ -80,17 +80,21 @@ excitation side/filter side with controls for each:
 
 *** exc: 16 or 32 modes
 
+controls: frequency + for wavetables select which one, mix of noise with?, amount of feedback/delay length (overrides other settings), elements of simulations, 
+
 - basic input
 - processings of basic input eg. inverse filtering, pitch following, other detection for exc changes (noise detection)
 - wavetables
 - glottal physical simulations
 - original speech synth maybe inv filtered or without LPC filter eg. basic impulsive sources from klatt and co.
 - vocoded bands 
-- dry/wet feedback - delayed feedback - this would be extra set of modes like mirrored modes
+- dry/wet feedback - delayed feedback - this would be extra set of modes like mirrored modes - main mode plus feedback/delay settings
 - vosim/others/impulse etc.
 - noise mix
 
 *** transformation: 16 or 32 modes
+
+controls: channel vocoder -> , throat/tube ->
 
 - channel vocoder/s - bandpass a la warps (with different sets of bandpasses perhaps eg. follow EMS2000/5000) and FFT. exc input as exc, voice input as input
 - phase vocoder?
