@@ -7,7 +7,7 @@
 #include "wavetable.h"
 
 Wavetable wavtable;
-Wavetable *wavetable;
+//Wavetable *wavetable; we have it
 
 
 #define TWO_PI 6.28318530717958647693
