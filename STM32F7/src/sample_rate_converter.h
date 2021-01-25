@@ -1,3 +1,5 @@
+// re-working as c only
+
 // Copyright 2015 Olivier Gillet.
 //
 // Author: Olivier Gillet (ol.gillet@gmail.com)
@@ -26,12 +28,17 @@
 //
 // Sample rate converter.
 
-#ifndef WARPS_DSP_SAMPLE_RATE_CONVERTER_H_
-#define WARPS_DSP_SAMPLE_RATE_CONVERTER_H_
-
-#include "stmlib/stmlib.h"
-
 #include <algorithm>
+
+/*
+  float tmp_[2][kMaxFilterBankBlockSize];
+
+  mid_src_down_.Process(in, tmp_[0], size);
+  low_src_down_.Process(tmp_[0], tmp_[1], size / kMidFactor);
+
+*/
+
+
 
 namespace warps {
 

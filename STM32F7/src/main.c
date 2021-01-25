@@ -187,7 +187,7 @@ extern Wavetable wavtable;
 //  BSP_LED_Init(LED1);
 //  BSP_LED_Init(LED2);
 //  BSP_LED_Init(LED3);
-
+  
   for(;;)
     {
       //      Codec_WriteRegister(&hi2c2,0x04,0x08); // bypass - can see bits but still no sound in any case

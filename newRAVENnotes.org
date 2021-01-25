@@ -4,10 +4,10 @@
 
 take from worm - any input process (also vocoder input), generate excitation, apply transformation/vocoder
 
-- start with vocoder from warps
+- start with vocoder from warps, other vocoders
 - then Mindlin/Fletcher and other simulations
 - overview of basic code and what is working from before
-- layout and basic operations
+- layout and basic operations - how many knobsADC etc.
 - processing plan and flow
 - question of platform/speed
 
