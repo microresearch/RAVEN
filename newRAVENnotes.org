@@ -1,3 +1,27 @@
+* diary
+
+** 27/1/2021
+
+- working through code in finch_void.c from Mindlin in mindlin_auto 
+- what are the series of equations
+- what are the parameters - of course w ecan vary beta (0 to -4) and amplitude
+- but what are:
+
+ aa.s1overCH=(360/0.8)*1e08;  // what are these values about?
+ aa.s1overLB=1.*1e-04; 
+ aa.s1overLG=(1/82.); 
+ aa.RB=(.5)*1e07;
+
+ aa.rdis=(300./5.)*(10000.); // 60 0000
+
+CH, LB, LG, RB ? 
+
+looking at: http://lsd.df.uba.ar/papers/PhysRevE.84.Sanz-11.pdf
+
+looks like capacitances, impedances (LB beak?), and RB resistance
+
+trachea is followed by oropharyngeal-esophageal cavity (OEC)
+
 * basics
 
 2 audio ins: 1excitation and 2voice. 1in normed to exc out faked for first modes eg. noise..
@@ -22,7 +46,7 @@ take from worm - any input process (also vocoder input), generate excitation, ap
 - layout and basic operations - how many knobsADC etc.
 - processing plan and flow - how any circular feedback could work?
 - question of platform/speed
-
+  
 * platform
 
 STM32F767 double precision is our development board.
