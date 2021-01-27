@@ -64,7 +64,7 @@ https://github.com/ybdarrenwang/PhaseVocoder
 - how this informs source/filter model
 - LPC work: *lpc4.c now!*
 
-- which other models we worked with?
+  - which other models we worked with?
 
 - delay/throat models
 

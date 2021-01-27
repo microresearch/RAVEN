@@ -22,10 +22,12 @@
 #include "wavetable.h"
 #include "wavetables.h"
 #include "wvocoder.h"
+#include "arm_math.h" 
 
 #define USB_OverCurrent_Pin GPIO_PIN_7
 #define USB_OverCurrent_GPIO_Port GPIOG
 
+//arm_rfft_fast_instance_f32 instance; // from arm_math
 
 /*
 

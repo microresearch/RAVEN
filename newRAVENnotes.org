@@ -1,4 +1,16 @@
+* basics
+
+2 audio ins: 1excitation and 2voice. 1in normed to exc out faked for first modes eg. noise..
+
+2/voice used for vocoders and LPC only
+
+question of feedback mix back in...
+
+2 audio outs: final out and excitation only out
+
 * TODO
+
+- review whta we have in terms of docs and software - what we can also use form WORM - what excitation sources can be seperated.
 
 - basic platform structure with audio.c and process
 
@@ -8,9 +20,8 @@ take from worm - any input process (also vocoder input), generate excitation, ap
 - then Mindlin/Fletcher and other simulations
 - overview of basic code and what is working from before
 - layout and basic operations - how many knobsADC etc.
-- processing plan and flow
+- processing plan and flow - how any circular feedback could work?
 - question of platform/speed
-
 
 * platform
 
@@ -68,7 +79,7 @@ https://forum.pjrc.com/archive/index.php/t-53854.html
 - LPC swoppings, bends, morphs and filters -> where was worm/test code? here in SOFTWARE -> notes on lpc in older notes
 - banks of LPC coefficients
 - some bends of WORM speech codecs
-- various throat sims, glottal and trachea models
+- various throat simulations, glottal and trachea models
 - raven works = physical models
 - others
 
@@ -84,35 +95,59 @@ controls: frequency + for wavetables select which one, mix of noise with?, amoun
 
 - basic input
 - processings of basic input eg. inverse filtering, pitch following, other detection for exc changes (noise detection)
+
+// above are input based...
+
 - wavetables
 - glottal physical simulations
 - original speech synth maybe inv filtered or without LPC filter eg. basic impulsive sources from klatt and co.
-- vocoded bands 
+- vocoded bands ???
 - dry/wet feedback - delayed feedback - this would be extra set of modes like mirrored modes - main mode plus feedback/delay settings
 - vosim/others/impulse etc.
 - noise mix
+- syrinx models - if these are coupled to the transform by reflections eg. any feedback from transforms to take into account.
+- peaks-spikes/square wave/simple calcs as in wormed_voice workshop:
+- from worm code - excitations used in each of the speech synths: sp0256, klatt, sam, parwave?, tms5200/5100, digitalker, nvp?, votrax
 
 *** transformation: 16 or 32 modes
 
 controls: channel vocoder -> , throat/tube ->
 
-- channel vocoder/s - bandpass a la warps (with different sets of bandpasses perhaps eg. follow EMS2000/5000) and FFT. exc input as exc, voice input as input
+- channel vocoder/s - bandpass a la warps (with different sets of bandpasses perhaps eg. follow EMS2000/5000) exc input as exc, voice input as input
+
+warps is third octave (spacings) 48db filters (8 stage?)
+
+- FFT vocoder - spacings, bends?
+
+https://github.com/marsus/MyPatches/blob/master/ChannelVocoderPatch.hpp
+
+blocksize is 128 samples, bandlength = (blocksize-2) / bands; q of buffering and overlap as our buffer at 32 samples is too small (512?)
+
+see also: https://www.rebeltech.org/patch-library/patch/FFT_Through/
+
+how we can narrow bands, move bands etc?
+
 - phase vocoder?
+
 - LPC swops, bends
+
+// below not input based
+
 - apply WORM speech filters
 - throat/tube simulations
+- beak and reflections
 - other physical models
-- apply extracted raven and other LPC co-effecients
+- apply extracted raven and other LPC co-efficients
 - bandpass filters - mix and manipulate!
-- no transform
+[- no transform - or have aux out anyways for no transform...]
 
-* older/where we are/what software is written or is close
+* approaches and software
 
-** software
+** wavetables
 
-*** vocoding
+** vocoding
 
-**** warps
+*** warps
 
 - we made some progress - calcs for coeffs in filter_my.py but in warps is different sample rates/filters and decimation etc. for varying bandwidth (warps general samplerate is 96K)
 
@@ -120,15 +155,69 @@ main action in callback:  modulator.Process((ShortFrame*)input, (ShortFrame*)out
 
 formant shift and envelope actions...
 
-*** LPC
+** LPC
 
-*** raven/bird simulations
+** raven/bird simulations
 
-*** glottal models
+*** Mindlin
 
-*** throat/tubes
+finch_void.c
 
-*** etc
+*** Fletcher
+*** Gardner
+** glottal models/birds too so some crossover with above
+
+*** LF (Liljen/Fant)
+
+lfgen/lfgen2?
+
+*** Klatt/KLSYN88/check nvp??
+
+*** Rosenberg
+
+http://homepage.univie.ac.at/christian.herbst//python/glottal_air_flow_models_8py_source.html = KLGLOTT88 and Rosenberg
+
+now as *glottalair.py* and writing wav file - seems working -> port to C (also Rosenberg tests in lfgen.c are working)
+
+http://www.mattmontag.com/projects-page/academic/speech
+
+*** Titze
+
+*** Herzel
+
+*** Ishizaka and Flanagan
+
+/root/projects/ERD_MODULES/RAVEN/older_notes_and_software/archived/IF_final.m
+
+*** flowgen_shimmer in voice_synth in docs - Fant model WORKING
+
+in lfgen2
+
+*** praat
+
+*** Software examples.
+
+**** voicform?
+
+
+** throat/tubes
+
+*** APEX
+
+*** tubes and ntubes SC code tube.c etc.
+
+*** 1. Kelly-Lochbaum model: https://ccrma.stanford.edu/~jos/pasp/Singing_Kelly_Lochbaum_Vocal_Tract.html -> Perry Cook (refs/code? PRCThesis.pdf)
+
+*** - elements BLOW to investigate: [[file:~/projects/ERD_modules/older/eurorack/elements/dsp/tube.cc::/%20Simple%20waveguide%20tube.][file:~/projects/ERD_modules/older/eurorack/elements/dsp/tube.cc::/ Simple waveguide tube.]] and exciter is quite simple?
+
+** etc
+
+*** wavetables
+
+- others: wavetable, formants a la SINGER/SPASM with two glottal
+  oscillators and vibrato -> where? check VOICFORM again, LPC
+
+- plague model (where we find clean code? looking now at simforstacksansmem2.c
 
 ** older notes
 
@@ -201,6 +290,11 @@ On Mon, Sep 19, 2016 at 6:36 PM, <m@1010.co.uk> wrote:
     best wishes
 
     Martin Howse
+
+
+* maybe easier just to comment on all code in archived
+
+- also mari python experiments
 
 * refs
 
