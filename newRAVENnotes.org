@@ -3,14 +3,22 @@
 ** 27/1/2021
 
 - working through code in finch_void.c from Mindlin in mindlin_auto 
-- what are the series of equations
-- what are the parameters - of course w ecan vary beta (0 to -4) and amplitude
+- an we run this in realtime on our platform, how many key parameters - q of x,y,z parameter maps or...
+- decouple of source and filter? can we plug different sources into filter and vice vers, is there any back feedback
+- what are the series of equations?
+- what are the parameters - of course we can vary beta (0 to -4) and amplitude/envelope
 - but what are:
 
- aa.s1overCH=(360/0.8)*1e08;  // what are these values about?
- aa.s1overLB=1.*1e-04; 
- aa.s1overLG=(1/82.); 
- aa.RB=(.5)*1e07;
+aa.gm=24000.; // also mentioned in https://github.com/mschachter/birdy/blob/master/docs/project.pdf as 23500 gamma
+
+in 276286948.pdf in new_docs this is refered to as a time scaling factor - see also Sanz-11.pdf below
+
+aa.r=0.1; 
+
+aa.s1overCH=(360/0.8)*1e08;  // what are these values about?
+aa.s1overLB=1.*1e-04; 
+aa.s1overLG=(1/82.); 
+aa.RB=(.5)*1e07;
 
  aa.rdis=(300./5.)*(10000.); // 60 0000
 
@@ -22,9 +30,48 @@ looks like capacitances, impedances (LB beak?), and RB resistance
 
 trachea is followed by oropharyngeal-esophageal cavity (OEC)
 
+runs at 20x sample rate of 44100
+
+- from mschachter birdy code:
+
+pp->m = 4e-10;
+pp->k1 = k1; // var
+pp->k2 = 400.0;
+pp->beta1 = 444e-7;
+pp->beta2 = 4e-11;
+pp->c = 16e-3;
+pp->f0 = f0; // var
+pp->alab = 2e-4;
+pp->tau = 5e-6;
+pp->a01 = 0.1;
+pp->a02 = 0.11;
+pp->psub = psub; // var
+
+// x2 is xsquared, x3 cubed as is v
+
+ dstate[0] = v;
+ dstate[1] = -pp->k1*x - pp->k2*x3 - pp->beta1*v - pp->beta2*v3 - pp->c*x2*v + pp->f0 + pp->alab*pp->psub*tterm;
+ dstate[1] /= pp->m;
+
+// which doesn;t match their description in: https://github.com/mschachter/birdy/blob/master/docs/project.pdf which is more like Mindlin book 7.4 eqn. Q of what is c?
+
+7.4/4.5: y'=-kx + (B-b)y -cx2y
+
+*TODO: try different values an equations with runge-kutta of finch and co*
+
+** 28/2/2021
+
+- finch code: ancho is width and largo is length
+
+- so aa.Ancho1=0.2; aa.Ancho2=.2; aa.Ancho3=0.2;largo1 = 1.5; largo2 =1.5; largo3 = 1.;
+
+which accords with total length of 3.5mm for finch tube/trachea
+
+*for crow/raven we have a length of 70mm and diameter of 7mm (from Fletcher 1988)*
+
 * basics
 
-2 audio ins: 1excitation and 2voice. 1in normed to exc out faked for first modes eg. noise..
+2 audio ins: 1excitation and 2voice. 1in normed to exc out faked for first modes eg. noise.. where we have no exc but only input
 
 2/voice used for vocoders and LPC only
 
@@ -32,9 +79,17 @@ question of feedback mix back in...
 
 2 audio outs: final out and excitation only out
 
+controls?:
+
+excitation: frequency, volume, mode 
+
+transform: x, y, z?, mode
+
+feedback: amount=mix, delay - mode? like another transform
+
 * TODO
 
-- review whta we have in terms of docs and software - what we can also use form WORM - what excitation sources can be seperated.
+- review what we have in terms of docs and software - what we can also use form WORM - what excitation sources can be seperated.
 
 - basic platform structure with audio.c and process
 
