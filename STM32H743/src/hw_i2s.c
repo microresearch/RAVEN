@@ -19,7 +19,7 @@
 #include "wavetable.h"
 #include "process.h"
 
-#define __UHSDR_DMAMEM //__attribute__ ((section (".dmamem"))) 
+//#define __UHSDR_DMAMEM __attribute__((section(".dma_buffer")))//ALIGN_32BYTES //__attribute__ ((section (".dmamem"))) 
 
 
 /*
@@ -35,8 +35,8 @@ typedef struct
     AudioSample_t in[2*AUDIO_BLOCK_SIZE];
 } dma_audio_buffer_t;
 
-static __UHSDR_DMAMEM dma_audio_buffer_t dma;
-
+//static dma_audio_buffer_t dma __attribute__((section(".dma_buffer"))) __attribute__((aligned (32)));
+static dma_audio_buffer_t dma __attribute__((section(".dma_buffer"))) __attribute__((aligned (32)));
 extern Wavetable wavtable;
 
 static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany){
@@ -70,8 +70,8 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 	const size_t sz = IQ_BLOCK_SIZE;
     const uint16_t offset = which == 0?sz:0;
 	uint16_t x;
-	float fbuffer[32],flinbuffer[32],frinbuffer[32];
-	int16_t pbuf[32], linbuf[32],rinbuf[32];
+	float fbuffer[2*AUDIO_BLOCK_SIZE],flinbuffer[2*AUDIO_BLOCK_SIZE],frinbuffer[2*AUDIO_BLOCK_SIZE];
+	int16_t pbuf[2*AUDIO_BLOCK_SIZE], linbuf[2*AUDIO_BLOCK_SIZE],rinbuf[2*AUDIO_BLOCK_SIZE];
 	
     AudioSample_t *audio;
 
@@ -144,6 +144,7 @@ void UhsdrHwI2s_Codec_StartDMA()
 	  	  HAL_SAI_Receive_DMA(&hsai_BlockA1,(uint8_t*)dma.in,sizeof(dma.in)/sizeof(dma.in[0].l));
 	  //	  HAL_SAI_Receive_DMA(&hsai_BlockA1,dma.in,sizeof(dma.in)/sizeof(dma.in[0].l));
 		  HAL_SAI_Transmit_DMA(&hsai_BlockB1,(uint8_t*)dma.out,sizeof(dma.out)/sizeof(dma.out[0].l));
+		  
 		  //  HAL_SAI_Transmit_DMA(&hsai_BlockB1,dma.out,sizeof(dma.out)/sizeof(dma.out[0].l));
 }
 

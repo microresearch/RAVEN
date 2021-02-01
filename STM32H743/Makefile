@@ -13,11 +13,13 @@ FLASH = st-flash
 # Sources
 
 SOURCES_S = ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/gcc/startup_stm32h743xx.s
+#SOURCES_S = startup_stm32h743xx.s
 
-SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/hw_i2s.c src/sai.c src/wavetable.c src/stm32h7xx_hal_msp.c src/stm32h7xx_it.c src/process.c src/wvocoder.c src/wfilterbank.c
+SOURCES_C = src/main.c src/dma.c src/i2c.c src/8731.c src/hw_i2c.c src/hw_i2s.c src/sai.c src/wavetable.c src/stm32h7xx_it.c src/process.c src/wvocoder.c src/wfilterbank.c
 
 SOURCES_C += sys/stubs.c sys/_sbrk.c
-SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/system_stm32h7xx.c
+SOURCES_C += system_stm32h7xx.c
+#SOURCES_C += ${CUBE_PATH}/Drivers/CMSIS/Device/ST/STM32H7xx/Source/Templates/system_stm32h7xx.c
 #SOURCES_C += ${CUBE_PATH}/Drivers/BSP/STM32H7xx_Nucleo_144/stm32h7xx_nucleo_144.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_gpio.c
 SOURCES_C += ${CUBE_PATH}/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_adc.c
@@ -97,8 +99,10 @@ LDFLAGS = -static $(MCUFLAGS)
 LDFLAGS += -Wl,--start-group -lgcc -lm -lnosys -lc -lg -lstdc++ -lsupc++ -Wl,--end-group
 LDFLAGS += -Wl,--gc-sections -Wl,--print-gc-sections -Wl,--cref,-Map=$(@:%.elf=%.map)
 LDFLAGS += -Wl,--print-memory-usage -specs=nano.specs
-LDFLAGS += -L ${CUBE_PATH}/Projects/NUCLEO-H743ZI/Demonstrations/SW4STM32/STM32H743ZI_Nucleo/ -T STM32H743ZITx_FLASH.ld
+#LDFLAGS += -L ${CUBE_PATH}/Projects/NUCLEO-H743ZI/Demonstrations/SW4STM32/STM32H743ZI_Nucleo/ -T STM32H743ZITx_FLASH.ld
 #LDFLAGS += -T arm-gcc-link_h7.ld
+#LDFLAGS +=  -T STM32H743ZITx_FLASH.ld
+LDFLAGS +=  -T flash2.ld
 
 # /root/STM32CubeH7/Projects/NUCLEO-H743ZI/Demonstrations/SW4STM32/STM32H743ZI_Nucleo/STM32H743ZITx_FLASH.ld
 

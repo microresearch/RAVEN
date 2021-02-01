@@ -2,7 +2,7 @@
 #define MAIN_H
 
 //#define IQ_SAMPLE_RATE (48000)
-#define AUDIO_SAMPLE_RATE (32000)
+#define AUDIO_SAMPLE_RATE (48000)
 
 // a lot of code pieces assume that this frequency
 // is 1500 Hz, so don't change
