@@ -29,7 +29,8 @@ typedef struct {
     __packed audio_data_t r;
     } AudioSample_t;
 
-      /*
+
+/*
 typedef struct {
     audio_data_t l;
     audio_data_t r;

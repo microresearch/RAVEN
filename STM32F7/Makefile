@@ -6,7 +6,7 @@ CUBE_PATH = /root/STM32CubeF7
 HEAP_SIZE = 0x100
 FLASH_OFFSET=0x08000000
 
-FLASH = st-flash
+FLASH = /root/Downloads/stlink-1.4.0/st-flash
 
 
 ################

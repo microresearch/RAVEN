@@ -78,7 +78,7 @@ void MX_SAI1_Init(void)
   hsai_BlockA1.Init.TriState = SAI_OUTPUT_NOTRELEASED;
   HAL_SAI_InitProtocol(&hsai_BlockA1, SAI_I2S_STANDARD, SAI_PROTOCOL_DATASIZE_16BIT, 2); // slots was 2 = should it be 1? - all as in: https://github.com/cankosar/DSP_Target/blob/master/hw/src/sai.cpp except 16 bits here
 
-    __HAL_SAI_DISABLE(&hsai_BlockB1);
+  //    __HAL_SAI_DISABLE(&hsai_BlockB1);
 
   
   hsai_BlockB1.Instance = SAI1_Block_B;
@@ -86,7 +86,7 @@ void MX_SAI1_Init(void)
   hsai_BlockB1.Init.Synchro = SAI_ASYNCHRONOUS;
   hsai_BlockB1.Init.OutputDrive = SAI_OUTPUTDRIVE_DISABLE; // was disable
   hsai_BlockB1.Init.NoDivider = SAI_MASTERDIVIDER_ENABLE;
-  //hsai_BlockB1.Init.ClockStrobing  = SAI_CLOCKSTROBING_FALLINGEDGE;
+  hsai_BlockB1.Init.ClockStrobing  = SAI_CLOCKSTROBING_FALLINGEDGE;
 
   /*  hsai_BlockB1.FrameInit.FrameLength       = 32;
   hsai_BlockB1.FrameInit.ActiveFrameLength = 16;

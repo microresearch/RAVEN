@@ -68,15 +68,18 @@ void MX_I2C2_Init(void)
 
   //  hi2c2.Init.Timing = 0x00303D5B; 
   //    hi2c2.Init.Timing = 0x0060A3FE;// >>>??? latest one
-  //  hi2c2.Init.Timing = 0x10707DBC; // from https://www.stm32duino.com/viewtopic.php?t=640
-    hi2c2.Init.Timing = 0x10C0ECFF; // from ovi and from stm modded ovi
-  //  hi2c2.Init.Timing = 0x10C0ECFF;
+  //    hi2c2.Init.Timing = 0x10707DBC; // from https://www.stm32duino.com/viewtopic.php?t=640
+  //  hi2c2.Init.Timing = 0x10C0ECFF; // from ovi and from stm modded ovi
+  //      hi2c2.Init.Timing = 0x10C0ECFF;
+  //    hi2c2.Init.Timing = 0x00000107; // for HSI config?
+  //  hi2c2.Init.Timing = 0x00303D5B; // for HSi without high speed 0 standard mode
+  //    hi2c2.Init.Timing = 0x0060A3FE;// >>>??? latest one
 
-  //  hi2c2.Init.Timing = 10
+  //  hi2c2.Init.Timing = 0x0000011F;
 
   //hi2c2.Init.Timing = 0x102023B4; // half above
   //  0x10707DBC;
-  //  hi2c2.Init.Timing = 0x10707DBC; // from other
+    hi2c2.Init.Timing = 0x10707DBC; // from other
   //hi2c2.Init.Timing =  0x00D00E28;  /* (Rise time = 120ns, Fall time = 25ns)
   hi2c2.Init.OwnAddress1 = 0;
   hi2c2.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -105,7 +108,7 @@ void MX_I2C2_Init(void)
     //    Error_Handler();
   }
 
-   HAL_I2CEx_EnableFastModePlus(I2C_FASTMODEPLUS_I2C2);
+  //     HAL_I2CEx_EnableFastModePlus(I2C_FASTMODEPLUS_I2C2);
 
   
 }
@@ -130,7 +133,11 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef* i2cHandle)
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_I2C2;
     HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+    __HAL_RCC_I2C2_CLK_ENABLE();
 
+    //    __HAL_RCC_I2C2_FORCE_RESET();
+    //    HAL_Delay(2);
+    //__HAL_RCC_I2C2_RELEASE_RESET();
   
 }
 

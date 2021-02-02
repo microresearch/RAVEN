@@ -16,7 +16,7 @@ void process(float *flinbuffer,float *frinbuffer,float *foutbuffer, int16_t sz)
   float modulation[32];
  
   // generate source
-    dowavetable(modulation, &wavtable, 200.0f, sz); 
+    dowavetable(foutbuffer, &wavtable, 100.0f, sz); 
   //  dowavetable(foutbuffer, &wavtable, 100.0f, sz); 
   // process modulation source and/or incoming
   /*
@@ -26,7 +26,7 @@ void Vocoder_Process(
     float* out,
     u8 size) {
   */
-  Vocoder_Process(flinbuffer,modulation,foutbuffer,sz);
+    //  Vocoder_Process(flinbuffer,modulation,foutbuffer,sz);
   //    runBANDStest_(flinbuffer, foutbuffer, sz); // workings
   //  for (x=0;x<sz;x++){
   //        foutbuffer[x]=flinbuffer[x]; // copy works

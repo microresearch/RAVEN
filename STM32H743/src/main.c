@@ -2,17 +2,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <main.h>
-#include "stm32f7xx_hal.h"
-#include "stm32f7xx_nucleo_144.h"
-#include "stm32f7xx_hal.h"
-#include "stm32f7xx_hal_pwr.h"
-#include "stm32f7xx_hal_pwr_ex.h"
-#include "stm32f7xx_hal_rcc.h"
-#include "stm32f7xx_hal_rcc_ex.h"
-#include "stm32f7xx_hal_i2s.h"
-#include "stm32f7xx_nucleo_144.h"
-#include "stm32f7xx_hal_conf.h"
-#include "stm32f7xx_hal_gpio.h"
+//#include "stm32h7xx_nucleo_144.h"
+#include "stm32h7xx_hal.h"
+#include "stm32h7xx_hal_pwr.h"
+#include "stm32h7xx_hal_pwr_ex.h"
+#include "stm32h7xx_hal_rcc.h"
+#include "stm32h7xx_hal_rcc_ex.h"
+#include "stm32h7xx_hal_i2s.h"
+#include "stm32h7xx_hal_conf.h"
+#include "stm32h7xx_hal_gpio.h"
 
 #include "hw_i2s.h"
 #include "dma.h"
@@ -30,6 +28,8 @@
 //arm_rfft_fast_instance_f32 instance; // from arm_math
 
 /*
+
+H743 now... but MCLK and SCK are blank!
 
 This is test code for Nucleo board from: https://github.com/dpiegdon/STM32F767ZI-Nucleo-144  with expanded Makefile and includes here
 
@@ -116,37 +116,37 @@ extern Wavetable wavtable;
  MPU_Config();
 
   /* Enable I-Cache-------------------------------------------------------------*/
- SCB_EnableICache();
+  SCB_EnableICache();
 
   /* Enable D-Cache-------------------------------------------------------------*/
- SCB_EnableDCache();
+  SCB_EnableDCache();
     
   /* MCU Configuration----------------------------------------------------------*/
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-   __HAL_RCC_PWR_CLK_ENABLE();
+  //__HAL_RCC_PWR_CLK_ENABLE();
    __HAL_RCC_SYSCFG_CLK_ENABLE();
 
+   // activate SRAM1\2\3
+   //  RCC->AHB2ENR |= (0x7 << 29);   
 
  HAL_Init();
 
 
   /* Ensure we have a clock configuration as in reset state, i.e. PLL clock is off and we are using HSI */
-  //HAL_RCC_DeInit(); // crashes too
+  HAL_RCC_DeInit(); 
 
   /* Configure the system clock */
   SystemClock_Config();
 
 
-  //  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+    HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
 
     /**Configure the Systick 
     */
-  //    HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
+      HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
   /* SysTick_IRQn interrupt configuration */
-  //  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
-
-  
+    HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
@@ -158,32 +158,37 @@ extern Wavetable wavtable;
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
 
-  
+  __HAL_RCC_SAI1_CLK_ENABLE();
   // how do we init all/audio codec
   // do we use SAI or i2c? or is it both as codec references i2c (setup?)
+__HAL_RCC_D2SRAM1_CLK_ENABLE();
+__HAL_RCC_D2SRAM2_CLK_ENABLE();
+__HAL_RCC_D2SRAM3_CLK_ENABLE();
 
+ 
     GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-  GPIO_InitStruct.Pin = USB_OverCurrent_Pin;
+    /*    GPIO_InitStruct.Pin = USB_OverCurrent_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USB_OverCurrent_GPIO_Port, &GPIO_InitStruct);
-
+    */
+    //      HAL_PWREx_EnableUSBVoltageDetector(); // this is an issue in the STM32H7 HAL 1.2.0, so we enable USB power here, otherwise USB won't work
+    MX_DMA_Init(); // should be first init?
+   
   
-  wavetable_init(&wavtable, crowtable, 142); // now last arg as length of table=less than 512 
-  Vocoder_Init(32000.0f);
+    wavetable_init(&wavtable, ourtable, 512); // now last arg as length of table=less than 512 
+    //Vocoder_Init(32000.0f);
   //  BANDS_Init_();
   
-    MX_DMA_Init();
     MX_I2C2_Init();
-
-
+    Codec_Reset(AUDIO_SAMPLE_RATE);
+    
     MX_SAI1_Init();    
 
-  UhsdrHwI2s_Codec_StartDMA(); // this was missing and now we have action on some pins
+    UhsdrHwI2s_Codec_StartDMA(); // this was missing and now we have action on some pins - runs till here now with right SAI clock for 48KHz but crashes and DMA code init should come before this
 
-  Codec_Reset(AUDIO_SAMPLE_RATE);
-  
+	
 /// LED basic test
   
 //  BSP_LED_Init(LED1);
@@ -192,8 +197,8 @@ extern Wavetable wavtable;
   
   for(;;)
     {
-      Codec_WriteRegister(&hi2c2,0x04,0x08); // bypass - can see bits but still no sound in any case
-      //Codec_Reset(48000);
+      //                      Codec_WriteRegister(&hi2c2,0x04,0x08); // bypass - can see bits but still no sound in any case
+      //      Codec_Reset(48000);
       	}
 
 	return 0;
@@ -223,8 +228,26 @@ void MPU_Config(void)
 
   HAL_MPU_ConfigRegion(&MPU_InitStruct);
 
+    /**Initializes and configures the Region and the memory to be protected 
+    */
+  
+  MPU_InitStruct.Enable = MPU_REGION_ENABLE;
+  MPU_InitStruct.Number = MPU_REGION_NUMBER1;
+  MPU_InitStruct.BaseAddress = 0x30000000;
+  MPU_InitStruct.Size = MPU_REGION_SIZE_128KB;
+  MPU_InitStruct.SubRegionDisable = 0x0;
+  MPU_InitStruct.TypeExtField = MPU_TEX_LEVEL0;
+  MPU_InitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+  MPU_InitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_ENABLE;
+  MPU_InitStruct.IsShareable = MPU_ACCESS_SHAREABLE;
+  MPU_InitStruct.IsCacheable = MPU_ACCESS_CACHEABLE;
+  MPU_InitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;
+
+  HAL_MPU_ConfigRegion(&MPU_InitStruct);
+  
   /* Enables the MPU */
   HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+
 }
 
 void SystemClock_Config(void)
@@ -233,63 +256,66 @@ void SystemClock_Config(void)
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
 
-  /** Configure LSE Drive Capability
+  /** Supply configuration update enable
   */
-  HAL_PWR_EnableBkUpAccess();
+  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
   /** Configure the main internal regulator output voltage
   */
-  __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
+
+  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 10;
-  RCC_OscInitStruct.PLL.PLLN = 120;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 5;
+  RCC_OscInitStruct.PLL.PLLN = 384;
+  RCC_OscInitStruct.PLL.PLLP = 2;
+  RCC_OscInitStruct.PLL.PLLQ = 25;
+  RCC_OscInitStruct.PLL.PLLR = 2;
+  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_0;
+  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
+  RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Activate the Over-Drive mode
-  */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
+                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
+  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
   PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_USART3|RCC_PERIPHCLK_SAI1
                               |RCC_PERIPHCLK_I2C2;
-  PeriphClkInitStruct.PLLSAI.PLLSAIN = 128;
-  PeriphClkInitStruct.PLLSAI.PLLSAIR = 2;
-  PeriphClkInitStruct.PLLSAI.PLLSAIQ = 5;
-  PeriphClkInitStruct.PLLSAI.PLLSAIP = RCC_PLLSAIP_DIV2;
-  PeriphClkInitStruct.PLLSAIDivQ = 5;
-  PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_2;
-  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLLSAI;
-  PeriphClkInitStruct.Usart3ClockSelection = RCC_USART3CLKSOURCE_PCLK1;
-  PeriphClkInitStruct.I2c2ClockSelection = RCC_I2C2CLKSOURCE_PCLK1;
+  PeriphClkInitStruct.Sai1ClockSelection = RCC_SAI1CLKSOURCE_PLL;
+  PeriphClkInitStruct.Usart234578ClockSelection = RCC_USART234578CLKSOURCE_D2PCLK1;
+  PeriphClkInitStruct.I2c123ClockSelection = RCC_I2C123CLKSOURCE_HSI;
+  PeriphClkInitStruct.TIMPresSelection = RCC_TIMPRES_ACTIVATED;
+
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
   {
     Error_Handler();
   }
+  //  HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_HSI, RCC_MCODIV_1);
+  //  HAL_RCC_MCOConfig(RCC_MCO2, RCC_MCO2SOURCE_SYSCLK, RCC_MCODIV_1);
+  
 }
 
 void Error_Handler()

@@ -32,11 +32,11 @@ typedef struct {
 typedef struct
 {
     AudioSample_t out[2*AUDIO_BLOCK_SIZE]; // 2 x 32 samples =64 left and 64 right
-    AudioSample_t in[2*AUDIO_BLOCK_SIZE];
+    AudioSample_t in[2*AUDIO_BLOCK_SIZE]; // now 48x2x2x4=48*16=768bytes
 } dma_audio_buffer_t;
 
-//static dma_audio_buffer_t dma __attribute__((section(".dma_buffer"))) __attribute__((aligned (32)));
-static dma_audio_buffer_t dma __attribute__((section(".dma_buffer"))) __attribute__((aligned (32)));
+static dma_audio_buffer_t dma __attribute__((section(".dmamem")));// __attribute__((aligned (32)));
+//static dma_audio_buffer_t dma __attribute__((section(".RAM_D2"))) __attribute__((aligned (4)));
 extern Wavetable wavtable;
 
 static inline void floot_to_int(int16_t* outbuffer, float* inbuffer,u16 howmany){
@@ -64,6 +64,7 @@ static inline void int_to_floot(int16_t* inbuffer, float* outbuffer, u16 howmany
 static void MchfHw_Codec_HandleBlock(uint16_t which)
 {
 	// with callback to audio processing handle to check out
+	//	  SCB_CleanDCache_by_Addr((uint32_t*)(((uint32_t)dma.out) & ~(uint32_t)0x1F), sizeof(dma.out)/sizeof(dma.out[0].l +32));
 
 	// Transfer complete interrupt
     // Point to 2nd half of buffers
@@ -92,11 +93,11 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 		linbuf[x]=audio[x].l;
 		rinbuf[x]=audio[x].r;
 	}
-	int_to_floot(linbuf,flinbuffer,sz);
-	int_to_floot(rinbuf,frinbuffer,sz);
+	//	int_to_floot(linbuf,flinbuffer,sz);
+	//	int_to_floot(rinbuf,frinbuffer,sz);
 	//	process(flinbuffer,frinbuffer,fbuffer,sz); // in process.c
-	dowavetable(fbuffer, &wavtable, 440.0f, sz); 
-	floot_to_int(pbuf,fbuffer,sz);
+		dowavetable(fbuffer, &wavtable, 440.0f, sz); 
+		floot_to_int(pbuf,fbuffer,sz);
 	//	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
 	for (x=0;x<sz;x++){
 		audioDst[x].l=pbuf[x];
@@ -135,15 +136,16 @@ static void UhsdrHwI2s_SetBitWidth()
 
 void UhsdrHwI2s_Codec_StartDMA()
 {
-	//	    UhsdrHwI2s_SetBitWidth();
-
+	//		    UhsdrHwI2s_SetBitWidth();
+			SCB_CleanInvalidateDCache(); 
     // we clean the buffers since we don't know if we are in a "cleaned" memory segement
 	  memset((void*)&dma,0,sizeof(dma));
-	//    memset((void*)&dma.iq_buf,0,sizeof(dma.iq_buf));
 
-	  	  HAL_SAI_Receive_DMA(&hsai_BlockA1,(uint8_t*)dma.in,sizeof(dma.in)/sizeof(dma.in[0].l));
+	//    memset((void*)&dma.iq_buf,0,sizeof(dma.iq_buf));
+	  HAL_SAI_Receive_DMA(&hsai_BlockA1,(uint8_t*)dma.in,sizeof(dma.in)/sizeof(dma.in[0].l));
 	  //	  HAL_SAI_Receive_DMA(&hsai_BlockA1,dma.in,sizeof(dma.in)/sizeof(dma.in[0].l));
-		  HAL_SAI_Transmit_DMA(&hsai_BlockB1,(uint8_t*)dma.out,sizeof(dma.out)/sizeof(dma.out[0].l));
+	  SCB_CleanDCache_by_Addr((uint32_t*)(((uint32_t)dma.out) & ~(uint32_t)0x1F), sizeof(dma.out)/sizeof(dma.out[0].l +32));
+	  HAL_SAI_Transmit_DMA(&hsai_BlockB1,(uint8_t*)dma.out,sizeof(dma.out)/sizeof(dma.out[0].l));
 		  
 		  //  HAL_SAI_Transmit_DMA(&hsai_BlockB1,dma.out,sizeof(dma.out)/sizeof(dma.out[0].l));
 }

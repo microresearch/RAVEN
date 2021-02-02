@@ -172,11 +172,11 @@ __IO mchf_codec_t mchf_codecs[1];
 //#define USE_32_AUDIO_BITS
 
 
-#if defined(USE_32_AUDIO_BITS)
-    #define AUDIO_WORD_SIZE WORD_SIZE_32
-#else
-    #define AUDIO_WORD_SIZE WORD_SIZE_16
-#endif
+//#if defined(USE_32_AUDIO_BITS)
+//#define AUDIO_WORD_SIZE WORD_SIZE_32
+//#else
+#define AUDIO_WORD_SIZE WORD_SIZE_16
+//#endif
 
 /**
  * @brief writes 16 bit data word to codec register
@@ -254,7 +254,7 @@ static uint32_t Codec_ResetCodec(I2C_HandleTypeDef* hi2c, uint32_t AudioFreq, Co
         // Reg 08: Sampling Control (Normal, 256x, 48k ADC/DAC)
         // master clock: 12.288 Mhz
         uint16_t samp_reg_val;
-	//	AudioFreq=96000;
+	AudioFreq=48000;
         switch (AudioFreq)
         {
         case 32000:
