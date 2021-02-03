@@ -23,7 +23,7 @@ typedef struct Band {
 
 typedef struct Filterbank{  
   //  float tmp_[2][96];
-  float samples_[512]; // 32samples*16bands=512
+  float samples_[16*AUDIO_BLOCK_SIZE]; // 32samples*16bands=512
   //  float delay_buffer_[6144];
   Band band_[17];
 } Filterbank;

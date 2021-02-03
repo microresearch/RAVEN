@@ -177,8 +177,8 @@ __HAL_RCC_D2SRAM3_CLK_ENABLE();
     MX_DMA_Init(); // should be first init?
    
   
-    wavetable_init(&wavtable, ourtable, 512); // now last arg as length of table=less than 512 
-    //Vocoder_Init(32000.0f);
+    wavetable_init(&wavtable, table_fletcher000, 99); // now last arg as length of table=less than 512 
+    Vocoder_Init(48000.0f);
   //  BANDS_Init_();
   
     MX_I2C2_Init();

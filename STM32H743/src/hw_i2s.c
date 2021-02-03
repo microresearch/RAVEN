@@ -93,11 +93,11 @@ static void MchfHw_Codec_HandleBlock(uint16_t which)
 		linbuf[x]=audio[x].l;
 		rinbuf[x]=audio[x].r;
 	}
-	//	int_to_floot(linbuf,flinbuffer,sz);
-	//	int_to_floot(rinbuf,frinbuffer,sz);
-	//	process(flinbuffer,frinbuffer,fbuffer,sz); // in process.c
-		dowavetable(fbuffer, &wavtable, 440.0f, sz); 
-		floot_to_int(pbuf,fbuffer,sz);
+	int_to_floot(linbuf,flinbuffer,sz);
+	int_to_floot(rinbuf,frinbuffer,sz);
+	process(flinbuffer,frinbuffer,fbuffer,sz); // in process.c
+	//dowavetable(fbuffer, &wavtable, 440.0f, sz); 
+	floot_to_int(pbuf,fbuffer,sz);
 	//	audio_comb_stereo(sz, audioDst, pbuf, pbuf);
 	for (x=0;x<sz;x++){
 		audioDst[x].l=pbuf[x];

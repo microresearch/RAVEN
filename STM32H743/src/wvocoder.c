@@ -82,7 +82,7 @@ static   float formant_shift_;
 static BandGain previous_gain_[16];
 static BandGain gain_[16];
 
-static float tmp_[32]; // for some reason can't be const variables
+static float tmp_[AUDIO_BLOCK_SIZE]; // for some reason can't be const variables
 
 static Filterbank modulator_filter_bank_;
 static Filterbank carrier_filter_bank_;
@@ -137,8 +137,8 @@ void Vocoder_Init(float sample_rate) {
   FilterBank_Init(&modulator_filter_bank_, sample_rate);
 //  limiter_.Init();
   u8 x;
-  release_time_ = 0.5f;
-  formant_shift_ = 0.5f;
+  release_time_ = 0.1f;
+  formant_shift_ = 0.05f;
   
   for (x=0;x<kNumBands;x++){
     previous_gain_[x].carrier=0.0f;
@@ -164,8 +164,8 @@ void Vocoder_Process(
       FilterBank_Analyze(&carrier_filter_bank_, carrier, size);
            
   // Set the attack/release release_time of envelope followers.
-  //float f = 80.0f * SemitonesToRatio(-72.0f * release_time_); // what kind of figures come out here?
-    float f=80.0f;
+  //float f = 80.0f * SemitonesToRatio(-72.0f * release_time_); // what kind of figures come out here? from 80*0.0006 to 80*1000 80000
+      float f=80000.0f; // lower values seem to stretch it?
     for (int32_t i = 0; i < kNumBands; ++i) {
     float decay = f / modulator_filter_bank_.band_[i].sample_rate;
     EnvF_set_attack(&follower_[i],decay * 2.0f);
@@ -200,7 +200,7 @@ void Vocoder_Process(
     float band_gain = (a + (b - a) * source_band_fractional); // fractional part
     float attenuation = envelope - kLastBand;
     if (attenuation >= 0.0f) {
-      band_gain *= 1.0f / (1.0f + 1.0f * attenuation);
+            band_gain *= 1.0f / (1.0f + 1.0f * attenuation);
     }
     envelope += envelope_increment;
 
@@ -208,7 +208,7 @@ void Vocoder_Process(
     gain_[i].vocoder = 1.0f - formant_shift_amount;
   }
   
-  for (u8 x=0;x<32;x++) out[x]=0.0f;
+  for (u8 x=0;x<size;x++) out[x]=0.0f;
 
       
   for (u8 i = 0; i < kNumBands; ++i) {
@@ -230,13 +230,13 @@ void Vocoder_Process(
       vocoder_gain += vocoder_gain_increment;
       carrier_gain += carrier_gain_increment;
       //      if (i==0) out[j]=carrierx[j];
-      //      out[j]+=carrierx[j]; // ????
+            out[j]+=carrierx[j]; // ????
   }
         previous_gain_[i] = gain_[i];
   }
     
   //  carrier_filter_bank_.Synthesize(out, size);
-  FilterBank_Synthesize(&carrier_filter_bank_, out, size); // same as above with out[j] ???
+  //  FilterBank_Synthesize(&carrier_filter_bank_, out, size); // same as above with out[j] ???
 
   //  limiter_.Process(out, 1.4f, size);
 

@@ -116,8 +116,8 @@ static inline void SVF_Process(SVF* svf, float* in, float* out, u8 size, u8 mode
 
 const int32_t kLowFactor = 4;
 const int32_t kMidFactor = 3;
-const int32_t kDelayLineSize = 6144;
-const int32_t kMaxFilterBankBlockSize = 32;
+const int32_t kDelayLineSize = 6144*2;
+const int32_t kMaxFilterBankBlockSize = AUDIO_BLOCK_SIZE;
 //const int32_t kSampleMemorySize = 480;
 
 extern const u8 kNumBands;
@@ -243,7 +243,7 @@ UP:
 
 typedef struct SampleRate{
   float* x_ptr_;
-  float x_[32];
+  float x_[AUDIO_BLOCK_SIZE];
   int32_t delay;
 } SampleRate;
 
@@ -336,7 +336,7 @@ void FilterBank_Init(Filterbank *Filterbankk, float sample_rate) {
   
     //    b.delay = (int32_t)(coefficients[1]);
     //    b.delay *= b.decimation_factor;
-        b->post_gain = coefficients[0];
+        b->post_gain = 2.0f*coefficients[0];
     //b->post_gain=0.2f;
     //    max_delay = max(max_delay, b.delay);
     for (int32_t pass = 0; pass < 2; ++pass) {
@@ -409,8 +409,8 @@ void FilterBank_Synthesize(Filterbank *Filterbankk, float* out, u8 size) {
     
     float* s = out;
     for (u8 j = 0; j < size; ++j) {
-      //           s[j] += b->samples[j];
-                              s[j]=(float)(rand()%32768)/32768.0f;
+                 s[j] += b->samples[j];
+      //                                    s[j]=(float)(rand()%32768)/32768.0f;
     }
   }
 
