@@ -431,7 +431,7 @@ tract/tube/formant: klatt, praat, tube.c/TRM, ntube/sc, lots of formant/bandpass
 
 - tested: snd ~/projects/ERD_modules/worm/docs/singer.scm but have to save as wav to play later
 
-- py-trm has wavetable: [[file:~/projects/ERD_modules/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/%20Calculates%20the%20initial%20glottal%20pulse%20and%20stores%20it%20in%20the%20wavetable,%20for%20use%20in%20the%20oscillator.][file:~/projects/ERD_modules/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/ Calculates the initial glottal pulse and stores it in the wavetable, for use in the oscillator.]]
+- py-trm has wavetable: [[file:~/projects/ERD_modules/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/%20Calculates%20the%20initial%20glottal%20pulse%20and%20stores%20it%20in%20the%20wavetable,%20for%20use%20in%20the%20oscillator.][file:~/projects/ERD_MODULES/worm/docs/py-trm/gnuspeech/Tube/wavetable.c::/ Calculates the initial glottal pulse and stores it in the wavetable, for use in the oscillator.]]
 
 but we have this in our tube.c also here! IGNORE
 

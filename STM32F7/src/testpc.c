@@ -1,3 +1,5 @@
+// to see if it crashes only
+
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>

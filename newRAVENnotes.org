@@ -1,5 +1,49 @@
 * diary
 
+** 4/2/2021
+
+TODO: ADC example, wavetables for 48k, how to improve vocoder? what is size of buffer -> filter? 60 samples (was 96 before so 1 millisecond fillbuffer)
+
+- question if we want to norm buffered DAC to x,y,z (any) if these need
+an animated signal for example for Mindlin or for movement through
+wavetable - active only in certain modes (knob would then be on seperate ADC for more versatility)
+
+
+
+** 3/2/2021
+
+- Codec now working on H743 
+
+- Try vocoder code=TESTED but a bit dull - remade filter coeffss for 48k - what is IR_SIZE in filter_my.py = impulse response size in samples try to reduce this to 1024 
+
+check delays etc in warps code for 96k = 96k has delay (check how this delay thing works)
+
+- how to remake wavetables for 48k - depends on type:
+
+/root/projects/ERD_MODULES/RAVEN/older_notes_and_software/docs/temped/py-trm/gnuspeech/Tube: also look into for speech and has some wavetable calcs
+
+- generate crow wavetables (praat?) - we also need sets of crow LPCs - larger windows... what is windowsize again in lpc? *128*
+
+// workflow for inverse filtered wavetables: praat inverse filter, audacity, dump to float using dumpwave.c but we need 32k samplerate -> 48K now
+
+// for drawn wavetable - create tone, isolate sine, redraw with draw tool, save, dump with dumpwave.c
+
+- plan own modes
+
+- movements through wavetables
+
+- basic proof of concept PCB (power H743 and xtals, say 1 or 2 adc in, 2x audio in and 2x audio out with WM8731)
+
+- go through WORM code and see what we can salvage - extract from each voice/approach and also unused elements such as wormaswave
+
+- laptop test basis - makefile and basic output follow worm code
+
+- where we are at with Mindlin and other bird voice code bases, how we can bend and take off from these?
+
+- question in Mindlin of generating and/or using slowly moving forcing functions?
+
+- test simple excitation, eg. tubes and final feedback mix in !
+
 ** 27/1/2021
 
 - working through code in finch_void.c from Mindlin in mindlin_auto 
@@ -177,7 +221,8 @@ controls: frequency + for wavetables select which one, mix of noise with?, amoun
 
 // above are input based...
 
-- wavetables
+- wavetables - with movement selected (select wavetbale and movement eg. worming): x-select, y-speed, z-movement param
+
 - glottal physical simulations
 - original speech synth maybe inv filtered or without LPC filter eg. basic impulsive sources from klatt and co.
 - vocoded bands ???

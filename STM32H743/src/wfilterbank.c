@@ -384,7 +384,7 @@ void FilterBank_Analyze(Filterbank *Filterbankk, float* in, u8 size) {
     for (u8 pass = 0; pass < 2; ++pass) {
       float* source = pass == 0 ? input : b->samples;
       
-      float* destination = b->samples;
+v      float* destination = b->samples;
       if (i == 0) {
 	SVF_Process(&(b->svf[pass]),source, destination, band_size, FILTER_MODE_LOW_PASS);
       } else if (i == kNumBands - 1) {
