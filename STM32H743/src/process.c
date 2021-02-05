@@ -17,7 +17,7 @@ void process(float *flinbuffer,float *frinbuffer,float *foutbuffer, int16_t sz)
  
   // generate source
   //      dowavetable(foutbuffer, &wavtable, 200.0f, sz); 
-  dowavetable(modulation, &wavtable, 100.0f, sz); 
+  dowavetable(modulation, &wavtable, 200.0f, sz); 
   // process modulation source and/or incoming
   /*
 void Vocoder_Process(

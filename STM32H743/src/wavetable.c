@@ -60,7 +60,8 @@ void dowavetable(float* outgoing, Wavetable *wavetable, float frequency, u8 leng
             ((wavetable->currentPosition - lowerPosition) *
              (wavetable->wavetable[upperPosition] - wavetable->wavetable[lowerPosition])));
 
-    outgoing[ii]=sample;
+        outgoing[ii]=sample;
+    //    outgoing[ii]=(float)(rand()%32768)/32768.0f;
     }
 }
 

@@ -2,7 +2,13 @@
 
 ** 4/2/2021
 
-TODO: ADC example, wavetables for 48k, how to improve vocoder? what is size of buffer -> filter? 60 samples (was 96 before so 1 millisecond fillbuffer)
+TODO: 
+
+ADC example, wavetables for 48k, how to improve vocoder? what is size
+of buffer -> filter? 60 samples (was 96 before so 1 millisecond
+fillbuffer), wav read/write for laptop test code and Makefiule
+
+
 
 - question if we want to norm buffered DAC to x,y,z (any) if these need
 an animated signal for example for Mindlin or for movement through
@@ -14,7 +20,9 @@ wavetable - active only in certain modes (knob would then be on seperate ADC for
 
 - Codec now working on H743 
 
-- Try vocoder code=TESTED but a bit dull - remade filter coeffss for 48k - what is IR_SIZE in filter_my.py = impulse response size in samples try to reduce this to 1024 
+- Try vocoder code=TESTED but a bit dull - remade filter coeffss for
+  48k - what is IR_SIZE in filter_my.py = impulse response size in
+  samples try to reduce this to 1024
 
 check delays etc in warps code for 96k = 96k has delay (check how this delay thing works)
 

@@ -165,7 +165,7 @@ void Vocoder_Process(
            
   // Set the attack/release release_time of envelope followers.
   //float f = 80.0f * SemitonesToRatio(-72.0f * release_time_); // what kind of figures come out here? from 80*0.0006 to 80*1000 80000
-      float f=80000.0f; // lower values seem to stretch it?
+      float f=8000.0f; // lower values seem to stretch it?
     for (int32_t i = 0; i < kNumBands; ++i) {
     float decay = f / modulator_filter_bank_.band_[i].sample_rate;
     EnvF_set_attack(&follower_[i],decay * 2.0f);
