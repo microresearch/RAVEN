@@ -1,20 +1,21 @@
 * diary
 
+** 8/2/2021
+
+- question of 96k samplerate (to test) and decimation/up conversion 
+- LPC seems to be working in lpcforlap.c
+
 ** 4/2/2021
 
 TODO: 
 
 ADC example, wavetables for 48k, how to improve vocoder? what is size
-of buffer -> filter? 60 samples (was 96 before so 1 millisecond
+of buffer -> filteri warps ? 60 samples (was 96 before so 1 millisecond
 fillbuffer), wav read/write for laptop test code and Makefiule
-
-
 
 - question if we want to norm buffered DAC to x,y,z (any) if these need
 an animated signal for example for Mindlin or for movement through
 wavetable - active only in certain modes (knob would then be on seperate ADC for more versatility)
-
-
 
 ** 3/2/2021
 
@@ -220,7 +221,7 @@ how to swop across modes so eg. use lpc reverse filtered excitation for vocoder
 
 excitation side/filter side with controls for each:
 
-*** exc: 16 or 32 modes
+*** exc: 32 modes
 
 controls: frequency + for wavetables select which one, mix of noise with?, amount of feedback/delay length (overrides other settings), elements of simulations, 
 
@@ -241,7 +242,7 @@ controls: frequency + for wavetables select which one, mix of noise with?, amoun
 - peaks-spikes/square wave/simple calcs as in wormed_voice workshop:
 - from worm code - excitations used in each of the speech synths: sp0256, klatt, sam, parwave?, tms5200/5100, digitalker, nvp?, votrax
 
-*** transformation: 16 or 32 modes
+*** transformation: 32 modes
 
 controls: channel vocoder -> , throat/tube ->
 

@@ -5,13 +5,36 @@
 
 //  gcc -std=c99 lpcforlap.c -o sclpc -lm -lsndfile -g   
 
+/* 2021 RAVEN:
+
+- revisiting and LPC_samecross now reconstructs signal - find residual(=inverse filter) from incoming and filter this with coeffs from incoming should be same signal more or less
+(added delay and re-ordering.
+
+- TODO: try faster coeff calcs, work with different window sizes
+
+- what are parameters/versions: P_MAX, bending of coefficients, merge
+  or no merge, gain/envelope or none, hold LPC coeffs, slow envelope
+  of coeffs/interpolate, storage and recall of coeffs, pre-computed
+  coeffs as tables, different sizes of windows, delays and lags
+
+- versions across->
+
+excitation/source: inverse filtering with different lengths of coeffs, how would freeze or slow hold of coeffs for this work
+
+transform: most of above 
+
+- merged windowing/fade of params in SC code...
+
+ */
+
+
 // 44100 so 0.005 seconds would be 220 samples - close to 256 
 
 /* fix on parameters-below, check coeff calc and filter calc (delay), printfs in lpcana, fitlpc !!!
 
  1- all coeffs from 3 methods are now the same (in praat list of coeffs starts with 1)
  1.5- same results with double and float. so coeffs seems okay
- 1.6- why are there different results in praat (crossover? pre-emph and windowing might all be different(
+ 1.6- why are there different results in praat (crossover? pre-emph and windowing might all be different)
 
  2- delay and filter is the issue - return to SC code:
 
@@ -26,8 +49,9 @@ but filter of source using coeffs always works but NOT inverse filter on source?
 */
 
 #define BLOCK_SIZE 32
-#define CHUNKSIZE 32
-#define	P_MAX	10	/* order p of LPC analysis, typically 8..14 */
+#define CHUNKSIZE 32 // chunksize less than blocksize ???
+#define	P_MAX	31	/* order p of LPC analysis, typically 8..14 */
+#define SAMPLERATE 48000
 
 // what is samplerate
 
@@ -42,7 +66,9 @@ static LPCfloat window32[32]={0.000019, 0.000088, 0.000318, 0.001015, 0.002934, 
 // gaussian window of varying sizes are generated below
 
 static LPCfloat lasted[128];
+static LPCfloat lasteded[128];
 static LPCfloat delay[128];
+static LPCfloat tmp[128];
 static LPCfloat coeff[32];
 static LPCfloat G; //gain;
 
@@ -50,13 +76,43 @@ static LPCfloat R[32];
 static int pos=0;
 
 ///source= Impulse.ar(delaytime.reciprocal); 
-// 
-void do_impulse(float *out, int numSamples, uint16_t freq){ //- so for 256 samples we have freq 125 for impulse
+//
+
+/*
+	unit->mPhaseOffset = 0.f;
+	unit->mFreqMul = unit->mRate->mSampleDur; // sample dur is seconds per sample so for 48k we have 1/48000 
+	if (unit->mPhase == 0.f) unit->mPhase = 1.f;
+
+	float freq = ZIN0(0) * unit->mFreqMul;
+
+
+	LOOP1(inNumSamples,
+		float z;
+		if (phase >= 1.f) {
+			phase -= 1.f;
+			z = 1.f;
+		} else {
+			z = 0.f;
+		}
+		phase += freq;
+		ZXP(out) = z;
+	);
+ */
+
+void do_noise(float *out, int numSamples){
+  int i;
+  for (i=0; i<numSamples;++i) {
+    out[i]=1.0f-((float)(rand()%32768)/16355.0f);
+  }
+}
+
+void do_impulse(float *out, int numSamples, float freq){ //- so for 256 samples we have freq 125 for impulse
     // from Impulse->LFUGens.cpp
   int i;
+  float recip=1.0f/SAMPLERATE;
   static float phase =0.0f;
   float z, freqinc;
-  freqinc=0.00003125 * freq;
+  freqinc=recip * freq; 
 
   for (i=0; i<numSamples;++i) {
     if (phase >= 1.f) {
@@ -65,12 +121,12 @@ void do_impulse(float *out, int numSamples, uint16_t freq){ //- so for 256 sampl
     } else {
       z = 0.f;
     }
-    phase += freqinc; // punch in freq is freqmul=1/32000 = 0.00003125 * 1000 (32000/32) = 0.03125
+    phase += freqinc; // punch in freq is freqmul=1/32000 = 0.00003125 * 1000 (32000/32) = 0.03125 ????
     out[i]=z;
   }
 }
 
-//(DelayN.ar(input,delaytime, delaytime)- LPCAnalyzer.ar(input,source,1024,MouseX.kr(1,256))).poll(10000)
+//(DelayN.ar(input,delaytime, delaytime)- LPCAnalyzer.ar(input,source,1024,MouseX.kr(1,256))).poll(10000) // here delaytime is 1024
 void do_delay(float *in, float *out, uint16_t delaytime, int numSamples){
   // delay up to buffersize =512
   static uint16_t dpointer=0;
@@ -88,6 +144,108 @@ void lpc_preemphasis(LPCfloat * x, int len, LPCfloat alpha )
       x[i] = x[i] - alpha * x[i-1];////y[k]=x[k]-0.95x[k-1]
 }
 
+//recalculate poles based on recent window of input
+void SCcalculatePoles() {
+
+	//can test for convergence by looking for 1-((Ei+1)/Ei)<d
+
+	int i, j;
+	LPCfloat sum;
+
+	//safety
+	int numpoles=windowsize;
+
+	//printf("p? %d",p);
+
+	//calculate new LPC filter coefficients following (Makhoul 1975) autocorrelation, deterministic signal, Durbin iterative matrix solver
+
+	//float R[21];//autocorrelation coeffs;
+	float preva[21];
+	float a[21];
+	LPCfloat E, k;
+
+	//faster calculation of autocorrelation possible?
+
+	for(i=0; i<=numpoles; ++i) {
+		sum=0.0;
+
+		for (j=0; j<= windowsize-1-i; ++j)
+			sum+= inputty[j]*inputty[j+i];
+
+		R[i]=sum;
+	}
+
+	E= R[0];
+	k=0;
+
+	if(E<0.00000000001) {
+
+		//zero power, so zero all coeff
+		for (i=0; i<numpoles;++i)
+			coeff[i]=0.0;
+//
+//		latesterror= E;
+		G=0.0;
+		//printf("zero power %f\n", E);
+		return;
+
+	};
+
+	//rescaling may help with numerical instability issues?
+//	float mult= 1.0/E;
+//	for(i=1; i<=numpoles; ++i)
+//		R[i]= R[i]*mult;
+//
+	for(i=0; i<=(numpoles+1); ++i) {
+		a[i]=0.0;
+		preva[i]=0.0; //CORRECTION preva[j]=0.0;
+	}
+
+
+//	for(i=0; i<numpoles; ++i) {
+//		printf("sanity check a %f R %1.15f ",a[i+1], R[i]);
+//	}
+//	printf("\n");
+
+
+	LPCfloat prevE= E;
+
+	for(i=1; i<=numpoles; ++i) {
+
+		sum=0.0;
+
+		for(j=1;j<i;++j)
+			sum+= a[j]*R[i-j];
+
+		k=(-1.0*(R[i]+sum))/E;
+
+		a[i]=k;
+
+		for(j=1;j<=(i-1);++j)
+			a[j]=preva[j]+(k*preva[i-j]);
+
+		for(j=1;j<=i;++j)
+			preva[j]=a[j];
+
+		E= (1-k*k)*E;
+
+		//printf("E check %f %d k was %f\n", E,i,k);
+
+		//check for instability; all E must be greater than zero
+
+	}
+
+       	G= sqrtf(E);
+
+	//	latesterror= E;
+
+	//solution is the final set of a
+	for(i=0; i<numpoles; ++i) {
+		//coeff[numpoles-1-i]=a[i+1];
+		coeff[i]=a[i+1];
+		//printf("a %f R %f",a[i+1], R[i]);
+	}
+}
 
 void calculateDurbPoles(){ // into coeffs
   int i, j;  LPCfloat r,sum;
@@ -97,7 +255,7 @@ void calculateDurbPoles(){ // into coeffs
 	for(i=0; i<=P_MAX; ++i) {
 	  coeff[i]=0.0f;
 		sum=0.0;
-		for (j=0; j<= windowsize-1-i; ++j) sum+= inputty[j]*inputty[j+i];
+		for (j=0; j<= windowsize-1-i; ++j) sum+= inputty[j]*inputty[j+i]; // 
 		R[i]=sum;
 		//		printf("SUM: %f,,,,\n", R[i]);
 	}
@@ -124,7 +282,7 @@ void calculateDurbPoles(){ // into coeffs
 			if (i % 2) coeff[j] += coeff[j] * r;
 
 error *= 1.0 - r * r;
- }
+    }
 
     /*	for(i=0; i<=P_MAX; ++i) {
 	  printf("%f ",coeff[i]); 
@@ -140,6 +298,7 @@ void zeroAll() {
     inputty[i]= 0.0f;
     //    last[i]=0.0f;
     lasted[i]=0.0f;
+    lasteded[i]=0.0f;
     //    lastnew[i]=0.0;
   }
 
@@ -195,11 +354,40 @@ void calculateOutput(LPCfloat * source, LPCfloat * target, int startpos, int num
 		  sum += lasted[posnow]*coeff[j]; 
 		  //		  printf("%f ",coeff[j]); 
 		}
-		sum= source[i]-sum; //scale factor G calculated by squaring energy E below TODO - if we use this from coeffs
+
+		sum= G*source[i]-sum; //scale factor G calculated by squaring energy E below
+
+		//		sum= source[i]-sum; //scale factor G calculated by squaring energy E below TODO - if we use this from coeffs
 		lasted[startpos+i]=sum;
-		target[i]= sum;
+		target[i]= sum;//*window32[i];
+		//target[i]= source[i];
 	}
 }
+
+void calculateOutput2(LPCfloat * source, LPCfloat * target, int startpos, int num) {
+  u8 j; int i;
+	int basepos,posnow;
+//G=1.0; // TESTY!
+
+	for(i=0; i<num; ++i) {
+
+		basepos= startpos+i+windowsize-1; //-1 since coefficients for previous values starts here
+		LPCfloat sum=0.0;
+		for(j=0; j<P_MAX; ++j) {
+		  posnow= (basepos-j)%windowsize;
+		  sum += lasteded[posnow]*coeff[j]; 
+		  //		  printf("%f ",coeff[j]); 
+		}
+
+		sum= G*source[i]-sum; //scale factor G calculated by squaring energy E below
+
+		//		sum= source[i]-sum; //scale factor G calculated by squaring energy E below TODO - if we use this from coeffs
+		lasteded[startpos+i]=sum;
+		target[i]= sum;//*window32[i];
+		//target[i]= source[i];
+	}
+}
+
 
 void LPC_cross(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * output, int numSamples) {
 
@@ -208,38 +396,93 @@ void LPC_cross(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * output, int 
   int left= windowsize-pos;
 
   // test with
-	do_impulse(newsource, numSamples, 200);
+   do_impulse(newsource, numSamples, 1000);
 
+   
 	if(numSamples>=left) {
-		lpc_preemphasis(newinput,numSamples,0.97);
+		lpc_preemphasis(newinput,numSamples,0.47);
 
 		for (i=0; i<left;++i) {
-		  float temp= newinput[i]*window128[pos]; //where are we in window 
+		  float temp= newinput[i]*window32[pos]; //where are we in window 
 		  inputty[pos++]=temp;
 		  newinput[i]=temp;
+		  //		  output[i]=temp;
 		}
 		calculateDurbPoles(); // this calculates the coeffs so... - these all give same results
 		pos=0;
 		predict(P_MAX,left,newinput,coeff,newsource); // this gives the error signal into newsource
+		//		zeroAll();
 		int remainder= numSamples-left;
 
 			for (i=0; i<remainder;++i) {
-			  float temp= newinput[left+i]*window128[pos]; //where are we in window 
+			  float temp= newinput[left+i]*window32[pos]; //where are we in window 
 			  inputty[pos++]=temp;
 			  newinput[i]=temp;
 		}
 			calculateOutput(newsource, output+left, pos-remainder, remainder);
+			printf("remain %d pos %d \n",remainder, pos); 
 	} else {
 		lpc_preemphasis(newinput,numSamples,0.97);
 		for (i=0; i<numSamples;++i) {
 		  //			inputty[pos++]= newinput[i];
-		  float temp= newinput[i]*window128[pos]; //where are we in window 
+		  float temp= newinput[i]*window32[pos]; //where are we in window 
 		  inputty[pos++]=temp;
 		  newinput[i]=temp;
+		  //		  output[i]=temp;
 		}
+		predict(P_MAX,left,newinput,coeff,newsource); // this gives the error signal into newsource
 		calculateOutput(newsource, output, pos-numSamples, numSamples);
+		printf("pos %d \n",pos); 
 	}
 }
+
+// this one seems to work in reconstructing sample
+
+void LPC_samecross(LPCfloat * newinput, LPCfloat *newsource, LPCfloat * output, int numSamples) {
+
+  // calc residual for 32 samples and apply coeff filter from same...
+  int i; pos=0;
+  //    do_impulse(newsource, numSamples, 1500.0f); // source= Impulse.ar(delaytime.reciprocal); 1/1024 or 1/32 buffersize - this is working
+
+  //  do_noise(newsource, numSamples);
+  
+     /*
+
+var delaytime= 32.0/SampleRate.ir; 32/48000
+
+source= Impulse.ar(delaytime.reciprocal);  = 1500 for 48k samplerare
+
+    */
+  
+  //  lpc_preemphasis(newinput,numSamples,0.97);
+
+  for (i=0; i<numSamples;++i) {
+    //float temp= newinput[i]*window32[pos]; //where are we in window
+    float temp= newinput[i];//*0.5f;//*window32[pos]; //where are we in window 
+    inputty[pos++]=temp;
+	//newinput[i]=temp;
+    //    output[i]=temp;
+  }
+  do_delay(inputty, newinput, CHUNKSIZE, numSamples);
+  predict(P_MAX,numSamples,newinput,coeff,newsource); // this gives the error signal into newsource
+    // but we want the last newsource 
+  calculateOutput(newsource, output, 0, numSamples); // apply LPC filter from coeffs to newsource and we reconstruct the signal
+
+  /*
+//(DelayN.ar(input,delaytime, delaytime)- LPCAnalyzer.ar(input,source,1024,MouseX.kr(1,256))).poll(10000) // residual is delayed input minus LPC filtered input 
+// try this one
+  for (i=0; i<numSamples;++i) {
+    tmp[i]=inputty[i]-output[i]; // calculate residual = input - filtered
+    //output[i]=inputty[i];
+  }
+  calculateOutput2(tmp, output, 0, numSamples); // apply LPC filter from coeffs
+  //  calculateDurbPoles(); // this calculates the coeffs so... - these all give same results - in sc this is last
+  */
+  SCcalculatePoles();
+}
+
+
+
 
 void LPC_residual(LPCfloat * newinput, LPCfloat * output, int numSamples) { // error signal into out
 
@@ -265,9 +508,9 @@ void LPC_residual(LPCfloat * newinput, LPCfloat * output, int numSamples) { // e
 		  inputty[pos++]=temp;
 		  newinput[i]=temp;
 		}
-			//		calculateresOutput(newinput, output+left, pos-remainder, remainder);
-			//		calculateOutput(tt, newsource+left, pos-remainder, remainder);
-			predict(P_MAX,remainder,newinput,coeff,output+left); // this gives the error signal into newsource
+			//	calculateresOutput(newinput, output+left, pos-remainder, remainder);
+			//			calculateOutput(tt, newsource+left, pos-remainder, remainder);
+			predict(P_MAX,remainder,newinput,coeff,output+left); // this gives the error signal into output
 	} else {
 		lpc_preemphasis(newinput,numSamples,0.97);
 		for (i=0; i<numSamples;++i) {
@@ -277,6 +520,8 @@ void LPC_residual(LPCfloat * newinput, LPCfloat * output, int numSamples) { // e
 		  newinput[i]=temp;
 		}
 		predict(P_MAX,numSamples,newinput,coeff,output); // this gives the error signal into newsource
+		//		calculateOutput(tt, newsource+left, pos-remainder, remainder);
+		//		calculateresOutput(newinput, output+left, pos-remainder, remainder);
 	}
 }
 
@@ -356,7 +601,7 @@ void main(int argc, char * argv []){
 	double imid = 0.5 * (32 + 1), edge = exp (-12.0);
 	for (long i = 1; i <= 32; i++) {
 	  float xx = (exp (-48.0 * (i - imid) * (i - imid) / (32 + 1) / (32 + 1)) - edge) / (1 - edge);
-	  printf("%f, ",xx);
+	  //	  printf("%f, ",xx);
 	}
 
 
@@ -371,7 +616,7 @@ void main(int argc, char * argv []){
 	    //	    return  1 ;
 	  } ;
 
-		printf ("# Channels %d, Sample rate %d\n", sfinfo.channels, sfinfo.samplerate) ;
+	printf ("# Channels %d, Sample rate %d\n", sfinfo.channels, sfinfo.samplerate) ;
 
 	LPCAnalyzer_init();
 
@@ -384,12 +629,12 @@ void main(int argc, char * argv []){
 	while ((readcount = sf_readf_float (infile, input,CHUNKSIZE)) > 0)
 	//			while ((readcount = sf_readf_double (infile, input, BLOCK_SIZE)) > 0)
 	{	
-	  	  LPCAnalysis_update(input, pout, output, CHUNKSIZE, P_MAX);//
-	  //	  LPC_cross(input, pout, output, CHUNKSIZE);
+	  // 	  LPCAnalysis_update(input, pout, output, CHUNKSIZE, P_MAX);//
+	  LPC_samecross(input, pout, output, CHUNKSIZE);
 	  //	  printf("SAMPLE %f", input[16]);
 
 	  //	  LPC_residual(input,output, CHUNKSIZE);
-	  //	  sf_writef_float (outfile, output, readcount) ;
+	  sf_writef_float (outfile, output, readcount) ;
 	  //		sf_writef_double (outfile, output, readcount) ;
 		count++;
 		} ;
