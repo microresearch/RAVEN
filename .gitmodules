@@ -1,0 +1,3 @@
+[submodule "mindlin_auto"]
+	path = mindlin_auto
+	url = https://github.com/kylerbrown/mindlin_auto.git
