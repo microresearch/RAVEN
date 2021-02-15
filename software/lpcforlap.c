@@ -14,8 +14,11 @@
 
 - what are parameters/versions: P_MAX, bending of coefficients, merge
   or no merge, gain/envelope or none, hold LPC coeffs, slow envelope
-  of coeffs/interpolate, storage and recall of coeffs, pre-computed
-  coeffs as tables, different sizes of windows, delays and lags
+  of coeffs/interpolate, lagging of the gain/envelope, storage and
+  recall of coeffs, pre-computed coeffs as tables, different sizes of
+  windows, delays and lags
+
+- how can we do any kind of pitch shift or other changes?
 
 - versions across->
 

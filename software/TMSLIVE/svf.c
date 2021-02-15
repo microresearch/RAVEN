@@ -49,7 +49,7 @@ void SVF_Process(SVF* svf, const float* in, float* out, u8 size, u8 mode) {
         y = bp_1 * f;
       } else if (mode == FILTER_MODE_BAND_PASS_NORMALIZED) {
         y = bp_1 * fq;
-
+	//	printf(" %f \n", y);
       } else if (mode == FILTER_MODE_HIGH_PASS) {
         y = x_1 - lp_1 * f - bp_1 * fq;
       }
