@@ -24,11 +24,30 @@ double _rms;
 uint16_t shouldLimitRMS=0;
 uint16_t kStopFrameIndex=15;
 
+uint16_t ClosestValueFinder(float actual, float* table, uint16_t size){
+
+  if (actual < table[0]) return 0;
+    
+    for (int i = 1; i < size; i++) {
+        if (table[i] > actual) {
+            float previous = table[i - 1];
+	    //	    printf("p: %f ", previous);
+            if (table[i] - actual < actual - previous) {
+                return i;
+            } else {
+                return i - 1;
+            }
+        }
+    }
+    return size - 1;
+}
+
+
 double formattedRMS(double rms, uint16_t size){
     return sqrtf(rms / size) * (1 << 15);
 }
 
-void translateCoefficients(uint16_t size){
+double translateCoefficients(uint16_t size){
 
     // Leroux Guegen algorithm for finding K's
 
@@ -37,13 +56,13 @@ void translateCoefficients(uint16_t size){
     double d[12] = {0};
     
     
-    k[1] = -normalizedCoefficients[1] / normalizedCoefficients[0];
-    d[1] = normalizedCoefficients[1];
-    d[2] = normalizedCoefficients[0] + (k[1] * normalizedCoefficients[1]);
+    k[1] = -coefficientss[1] / coefficientss[0];
+    d[1] = coefficientss[1];
+    d[2] = coefficientss[0] + (k[1] * coefficientss[1]);
     
     int i = 2;
     while (i <= 10) {
-        double y = normalizedCoefficients[i];
+        double y = coefficientss[i];
         b[1] = y;
     
         int j = 1;
@@ -55,6 +74,7 @@ void translateCoefficients(uint16_t size){
         }
     
         k[i] = -y / d[i];
+	//	printf("%f ", k[i]);
         d[i + 1] = d[i] + (k[i] * y);
         d[i] = b[i];
         i += 1;
@@ -65,12 +85,14 @@ void translateCoefficients(uint16_t size){
       for (uint16_t i=0;i<11;i++){
 	_ks[i]=k[i];
       }
+      _rms=rms; // question of RMS and rmss function?
+      return rms;
 }
 
 
 double rmss (void) {
-    if (shouldLimitRMS && _rms >= rms[kStopFrameIndex - 1]) {
-        return rms[kStopFrameIndex - 1];
+    if (shouldLimitRMS && _rms >= rmstable[kStopFrameIndex - 1]) {
+        return rmstable[kStopFrameIndex - 1];
     } else {
         return _rms;
     }
@@ -100,6 +122,7 @@ void getCoefficientsFor(float *buffer, int16_t size){
   //        coefficients = [0]*11
   for (uint16_t i=0;i<11;i++){
     coefficientss[i] = aForLag(buffer,size,i);
+    //    printf("%f ", coefficientss[i]);
       }
 }
 

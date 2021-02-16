@@ -6,11 +6,19 @@
 #include "forlap.h"
 #include "svf.h"
 #include "pitch.h"
-#include "tms5110r.inc" // tables
+//#include "tms5110r.inc" // tables
+#include "CodingTable.h"
+//#include "tms5220x.h"
+#include "lpc_lap.h"
 
-//  gcc -std=c99 tmslive.c svf.c PitchEstimator.c -o tms -lm -lsndfile -g   
+//  gcc -std=c99 tmslive.c lpc_lap.c svf.c PitchEstimator.c -o tms -lm -lsndfile -g   
 
 // start with simple inout of framesize x from wav (what is default) at 8k samplerate and output values
+// then check values and playback - how values match with python
+
+// questions about: RMS, normalizing, voiced/unvoiced, repeat, bends->k values in arrays, pitches, freezes, add other encodings together, very raw bends
+
+// TODO: does playback table from talkie match the one we use to encode, different chips and playbalcks, pre-emph and above 
 
 // frameRate default is 25, windowWidth in frames is 2
 
@@ -47,7 +55,10 @@ SVF svf[2]; // 2 passes
 float samplerate=8000.0f;
 uint16_t minimumpitch=50;
 uint16_t maximumpitch=500;
+float unvoicedThreshold=0.3f; // default threshold is: 0.3
+extern double _ks[11];
 
+uint16_t _k1, _k2, _k3, _k4, _k5, _k6, _k7, _k8, _k9, _k10, gainindex,pitchindex;
 
 ////////////////////////////////////
 
@@ -137,19 +148,22 @@ void main(int argc, char * argv []){
 	{	printf ("Not able to open input file %s.\n", infilename) ;
 		puts (sf_strerror (NULL)) ;
 		} ;
-	/*
+	
 	if (! (outfile = sf_open("output.wav", SFM_WRITE, &sfinfo)))
 	  {   printf ("Not able to open output file %s.\n", "output.wav") ;
 	    sf_perror (NULL) ;
 	    //	    return  1 ;
 	  } ;
-	*/
+	
+
 	printf ("# Channels %d, Sample rate %d\n", sfinfo.channels, sfinfo.samplerate) ;
 
 	int k, m, readcount,count=0;
 	static float input[1280]; 
 	static float output[1280];
 
+	lpcinit();
+	
 	for (u8 pass = 0; pass < 2; ++pass) {
 	  SVF_Init(&svf[pass]);
 	  set_f_fq(&svf[pass],coeffs[(pass * 2)],coeffs[(pass * 2)+1]); // calculated 4 coefficients using filterfortm
@@ -157,80 +171,92 @@ void main(int argc, char * argv []){
 
 	int counter=0;
 	uint16_t offset=0;
+	double rms;
 	readcount = sf_readf_float (infile, input+offset,CHUNKSIZE/2); // read first chunk
 	offset=CHUNKSIZE/2;
 	while ((readcount = sf_readf_float (infile, input+offset,CHUNKSIZE/2)) > 0)
 	{
-	  // how can we do the overlap...
-
 	  double pitch = pitchtable(input, CHUNKSIZE);
 	  //	  counter++; printf("%d  ",counter);
 	  Hamming(input, CHUNKSIZE);
 	  getCoefficientsFor(input, CHUNKSIZE);
-	  translateCoefficients(CHUNKSIZE);
-	  /*
-            HammingWindow.processBuffer(cur_buf)
-            coefficients = cur_buf.getCoefficientsFor()
-            reflector = Reflector.translateCoefficients(self.codingTable, coefficients, cur_buf.size)
-	    frameData = FrameData(reflector, pitch, repeat=False)
-	    PRINT the frame which is: gain, repat, pitch, set of 10 k coefficients
-	  */
+	  rms=translateCoefficients(CHUNKSIZE);
 
+	  // so we have to deal with:
+	  //voiced/unvoiced
+	  if (_ks[1]>=unvoicedThreshold){ // default threshold is: 0.3
+	    printf("unvoiced "); // and/??
+	    pitch=0;
+	  }
+	  
+	  // and repeat seems to be always 0/false
 
+	  // stopframe? but can we have any stopframe as never stops?
+	  gainindex=ClosestValueFinder(rms, rmstable, sizeof(rmstable)); // still need to work a bit on rms
+	  float gain= rmstable[gainindex]; // samples seem a bit quiet
+	  printf("gain %f ", gain);
+	  float pitchh;
+	  if (pitch==0) {
+	    pitchh=0.0;
+	    pitchindex=0;
+	      }
+	  else
+	    {
+	      pitchindex=ClosestValueFinder(pitch, pitchtablet, sizeof(pitchtablet)/sizeof(float)); // index !
+	      pitchh=pitchtablet[pitchindex];
+
+	    }
+	      printf("pitch %f ", pitchh);
+	  // ks? k1-k10
+	  //	  printf(" %f %f %f", _ks[1], _ks[2], _ks[3]);
+	  //	  float _k1=k1[ClosestValueFinder(_ks[1], k1, sizeof(k1))]; // but what we want is the index
+	  _k1=ClosestValueFinder(_ks[1], k1, sizeof(k1)/sizeof(float));
+	  printf("k1 %d ", _k1);
+	  _k2=ClosestValueFinder(_ks[2], k2, sizeof(k2)/sizeof(float));
+	  printf("k2 %d ", _k2);
+	  _k3=ClosestValueFinder(_ks[3], k3, sizeof(k3)/sizeof(float));
+	  printf("k3 %d ", _k3);
+	  _k4=ClosestValueFinder(_ks[4], k4, sizeof(k4)/sizeof(float));
+	  printf("k4 %d ", _k4);
+	  _k5=ClosestValueFinder(_ks[5], k5, sizeof(k5)/sizeof(float));
+	  printf("k5 %d ", _k5);
+	  _k6=ClosestValueFinder(_ks[6], k6, sizeof(k6)/sizeof(float));
+	  printf("k6 %d ", _k6);
+	  _k7=ClosestValueFinder(_ks[7], k7, sizeof(k7)/sizeof(float));
+	  printf("k7 %d ", _k7);
+	  _k8=ClosestValueFinder(_ks[8], k8, sizeof(k8)/sizeof(float));
+	  printf("k8 %d ", _k8);
+	  _k9=ClosestValueFinder(_ks[9], k9, sizeof(k9)/sizeof(float));
+	  printf("k9 %d ", _k9);
+	  _k10=ClosestValueFinder(_ks[10], k10, sizeof(k10)/sizeof(float));
+	  printf("k10 %d\n", _k10);
+
+	  // also how playback works as we overlap frames? playback every 200 samples each frame...
+
+	  // for bends we can shift around in the tables!!
+	  
+	  // tms playback for each/half frame TODO ????
+	  // let's try to write 200 samples to buffer
+	  for (uint16_t j=0; j<CHUNKSIZE/2; j++){
+	    //	    uint16_t lpc_get_sample(void)
+	    uint16_t sample =(lpc_get_sample()<<6)-32768; //     int16_t samplel=(lpc_get_sample()<<6)-32768; // TODO or scale samples/speed???
+
+	    // conv to float and write
+	    output[j]=(float)(sample)/32768.0f; 
+	    //	    printf("%f ", output[j]);
+	  }
+	  sf_writef_float (outfile, output, CHUNKSIZE/2);  
 	  // copy last second chunk to first
 	  for (uint16_t i=0; i<CHUNKSIZE/2; i++){
 	    input[i]=input[i+(CHUNKSIZE/2)];
 	      }
 	    
-	  
 	  /*
-	  b=Buffer.fromWave(args.filename) // this does downsampling to 8k
-	  x=Processor(b, args.tablesVariant)
-	  result = BitPacker.pack(x)
-	  */
-
-	  /* processor.py
-
-	     self.mainBuffer = buf
-	     self.pitchTable = None
-	     self.pitchBuffer = Buffer.copy(buf)
-our tms5110r.inc:        self.codingTable = CodingTable(model)
-
-        if settings.preEmphasis: // leave this for now!
-            PreEmphasizer.processBuffer(buf)
-
-        self.pitchTable = {}
-        wrappedPitch = False
-        if settings.overridePitch:
-            wrappedPitch = settings.pitchValue
-        else:
-DONE:            self.pitchTable = self.pitchTableForBuffer(self.pitchBuffer)
-
-        coefficients = sp.zeros(11)
-
-input:        segmenter = Segmenter(buf=self.mainBuffer, windowWidth=settings.windowWidth)
-
-        frames = []
-
-TODO:        for (cur_buf, i) in segmenter.eachSegment():
-            HammingWindow.processBuffer(cur_buf)
-            coefficients = cur_buf.getCoefficientsFor()
-            reflector = Reflector.translateCoefficients(self.codingTable, coefficients, cur_buf.size)
-
-            if wrappedPitch:
-                pitch = int(wrappedPitch)
-            else:
-                pitch = self.pitchTable[i]
-
-translations from tables and print this i guess:            frameData = FrameData(reflector, pitch, repeat=False)
-
-            frames.append(frameData)
-
         if settings.includeExplicitStopFrame:
             frames.append(frameData.stopFrame())
 	  */
 	  
-	  //	  sf_writef_float (outfile, output, readcount) ;
+	  
 	  //	  sf_writef_double (outfile, output, readcount) ;
 		count++;
 	} ;
