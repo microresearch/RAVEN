@@ -18,7 +18,7 @@
 
 // questions about: RMS, normalizing, voiced/unvoiced, repeat, bends->k values in arrays, pitches, freezes, add other encodings together, very raw bends
 
-// TODO: does playback table from talkie match the one we use to encode, different chips and playbalcks, pre-emph and above 
+// TODO: does playback table from talkie match the one we use to encode, different chips and playbacks, pre-emphDONE
 
 // frameRate default is 25, windowWidth in frames is 2
 
@@ -56,6 +56,8 @@ float samplerate=8000.0f;
 uint16_t minimumpitch=50;
 uint16_t maximumpitch=500;
 float unvoicedThreshold=0.3f; // default threshold is: 0.3
+uint16_t preemph=1;
+float alpha=0.9373f;
 extern double _ks[11];
 
 uint16_t _k1, _k2, _k3, _k4, _k5, _k6, _k7, _k8, _k9, _k10, gainindex,pitchindex;
@@ -63,9 +65,7 @@ uint16_t _k1, _k2, _k3, _k4, _k5, _k6, _k7, _k8, _k9, _k10, gainindex,pitchindex
 ////////////////////////////////////
 
 void filterer(float *inbuffer, float *outbuffer, int16_t size){
-
-  // this doesn't seem to work!
-  
+  // seems to work now...  
   /// computes butterworth coeffs IIR filtfilt I think - order=5, bandpass
   // lowpass as 50, high as 500 so can pre-compute any coeffs
 
@@ -112,25 +112,12 @@ double pitchtable(float *buffer, uint16_t size){
   uint16_t maximumPeriod=(int)samplerate/minimumpitch;
   // filters from filterer
   filterer(buffer, tmpbuffer, size);
-  estimater = pitchForPeriod(buffer, size, minimumPeriod, maximumPeriod); // min is 8000/500, max is 8000/50
+  estimater = pitchForPeriod(tmpbuffer, size, minimumPeriod, maximumPeriod); // min is 8000/500, max is 8000/50
   //             pitchTable[index] = PitchEstimator.pitchForPeriod(buf)
   //        return cls(buf).estimate()
   //  printf("estimate pitch: %d %d EST %f \n", minimumPeriod, maximumPeriod, estimater);
   return estimater;
 }
-
-/*
-    def pitchTableForBuffer(self, pitchBuffer):
-        filterer = Filterer(pitchBuffer, lowPassCutoffInHZ=settings.minimumPitchInHZ, highPassCutoffInHZ=settings.maximumPitchInHZ, gain=1)
-        buf = filterer.process()
-
-        segmenter = Segmenter(buf, windowWidth=2)
-        pitchTable = sp.zeros(segmenter.numberOfSegments())
-
-        for (buf, index) in segmenter.eachSegment():
-            pitchTable[index] = PitchEstimator.pitchForPeriod(buf)
-*/
-
 
 ////////////////////////////////////
 
@@ -176,6 +163,10 @@ void main(int argc, char * argv []){
 	offset=CHUNKSIZE/2;
 	while ((readcount = sf_readf_float (infile, input+offset,CHUNKSIZE/2)) > 0)
 	{
+	  if (preemph){
+	    lpc_preemphasis(input, CHUNKSIZE, alpha);
+	  }
+	  
 	  double pitch = pitchtable(input, CHUNKSIZE);
 	  //	  counter++; printf("%d  ",counter);
 	  Hamming(input, CHUNKSIZE);
