@@ -1,3 +1,7 @@
+#ifdef PCSIM
+#include "forlap.h"
+#endif
+
 enum FilterMode {
   FILTER_MODE_LOW_PASS,
   FILTER_MODE_BAND_PASS,
@@ -17,8 +21,8 @@ typedef struct SVF{
 // functions also
 void SVF_Reset(SVF* svf);
 void SVF_Init(SVF* svf);
-void SVF_Init_();
-void BANDS_Init_();
+void SVF_Init_(void);
+void BANDS_Init_(void);
 void runBANDStest_(float* incoming, float* outgoing, u8 band_size);
 void runSVFtest_(float* incoming, float* outgoing, u8 band_size);
 void set_f_fq(SVF* svf, float f, float fq);
