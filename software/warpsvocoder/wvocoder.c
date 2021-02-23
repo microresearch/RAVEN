@@ -203,7 +203,7 @@ void Vocoder_Process(
             band_gain *= 1.0f / (1.0f + 1.0f * attenuation);
     }
     envelope += envelope_increment;
-    printf("source %d`n", source_band_integral);
+    //    printf("source %d\n", source_band_integral);
     gain_[i].carrier = band_gain * formant_shift_amount;
     gain_[i].vocoder = 1.0f - formant_shift_amount;
   }

@@ -15,7 +15,7 @@ fillbuffer), wav read/write for laptop test code and Makefiule
 
 - question if we want to norm buffered DAC to x,y,z (any) if these need
 an animated signal for example for Mindlin or for movement through
-wavetable - active only in certain modes (knob would then be on seperate ADC for more versatility)
+wavetable - active only in certain modes (*knob would then be on seperate ADC for more versatility*)
 
 ** 3/2/2021
 
