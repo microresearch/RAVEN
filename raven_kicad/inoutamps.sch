@@ -639,7 +639,7 @@ $EndComp
 Wire Wire Line
 	1885 3245 1915 3245
 Text Notes 6520 1635 0    50   ~ 0
-add bypass caps
+added bypass caps 24/2
 $Comp
 L power:+12V #PWR0117
 U 1 1 603F6630
