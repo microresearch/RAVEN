@@ -639,7 +639,7 @@ $EndComp
 Wire Wire Line
 	1885 3245 1915 3245
 Text Notes 6520 1635 0    50   ~ 0
-add bypass caps
+added bypass caps 24/2
 $Comp
 L power:+12V #PWR0117
 U 1 1 603F6630
@@ -677,17 +677,6 @@ Wire Wire Line
 	6815 2095 6815 2135
 Wire Wire Line
 	6815 2335 6815 2375
-$Comp
-L power:+12V #PWR0119
-U 1 1 603F9E8E
-P 7425 2090
-F 0 "#PWR0119" H 7425 1940 50  0001 C CNN
-F 1 "+12V" H 7440 2263 50  0000 C CNN
-F 2 "" H 7425 2090 50  0001 C CNN
-F 3 "" H 7425 2090 50  0001 C CNN
-	1    7425 2090
-	1    0    0    -1  
-$EndComp
 $Comp
 L power:GND #PWR0120
 U 1 1 603F9E94
@@ -786,6 +775,17 @@ F 1 "-12V" H 7425 3173 50  0000 C CNN
 F 2 "" H 7410 3000 50  0001 C CNN
 F 3 "" H 7410 3000 50  0001 C CNN
 	1    7410 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+12V #PWR0119
+U 1 1 603F9E8E
+P 7425 2090
+F 0 "#PWR0119" H 7425 1940 50  0001 C CNN
+F 1 "+12V" H 7440 2263 50  0000 C CNN
+F 2 "" H 7425 2090 50  0001 C CNN
+F 3 "" H 7425 2090 50  0001 C CNN
+	1    7425 2090
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC

@@ -329,7 +329,7 @@ L MCU_ST_STM32H7:STM32H743ZITx U3
 U 1 1 60221408
 P 4875 4120
 F 0 "U3" H 4825 434 50  0000 C CNN
-F 1 "STM32H743ZITx" H 4825 343 50  0000 C CNN
+F 1 "STM32H743ZITx" H 4705 3822 50  0000 C CNN
 F 2 "Housings_QFP:LQFP-144_20x20mm_Pitch0.5mm" H 3775 720 50  0001 R CNN
 F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00387108.pdf" H 4875 4120 50  0001 C CNN
 	1    4875 4120
@@ -696,7 +696,7 @@ Wire Wire Line
 	3575 1520 3575 1590
 Text Label 3575 1590 3    50   ~ 0
 VREF
-Text Label 2250 2130 0    50   ~ 0
+Text Label 2485 2130 0    50   ~ 0
 VREF
 $Comp
 L Device:CP_Small C15
@@ -1215,14 +1215,10 @@ Text Label 8135 1690 2    50   ~ 0
 SA1_SD_A
 Wire Wire Line
 	8195 1690 8135 1690
-Text GLabel 8400 1990 0    50   Input ~ 0
+Text GLabel 8328 2290 0    50   Input ~ 0
 LOUT
-Text GLabel 8400 2090 0    50   Input ~ 0
+Text GLabel 8262 2390 0    50   Input ~ 0
 ROUT
-Wire Wire Line
-	8400 1990 8435 1990
-Wire Wire Line
-	8400 2090 8435 2090
 Text GLabel 10265 2140 2    50   Input ~ 0
 RIN
 Text GLabel 10265 2040 2    50   Input ~ 0
@@ -1291,4 +1287,31 @@ Wire Wire Line
 	6075 2620 6120 2620
 Wire Wire Line
 	6075 4220 6110 4220
+Wire Wire Line
+	8328 2290 8435 2290
+Wire Wire Line
+	8435 2290 8435 2289
+Connection ~ 8435 2290
+Wire Wire Line
+	8262 2390 8435 2390
+Connection ~ 8435 2390
+Wire Wire Line
+	8435 2390 8436 2390
+Text Notes 7252 2138 0    79   ~ 0
+correct outs 3/1
+$Comp
+L Device:R_Small R46
+U 1 1 604554C3
+P 2350 2130
+F 0 "R46" V 2210 2090 50  0000 L CNN
+F 1 "47R" V 2280 2070 50  0000 L CNN
+F 2 "Resistors_SMD:R_0805" H 2350 2130 50  0001 C CNN
+F 3 "~" H 2350 2130 50  0001 C CNN
+	1    2350 2130
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	2450 2130 2485 2130
+Text Notes 2015 2600 0    50   ~ 0
+added 47R 4/3
 $EndSCHEMATC
